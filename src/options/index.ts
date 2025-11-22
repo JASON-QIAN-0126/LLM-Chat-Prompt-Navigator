@@ -4,6 +4,8 @@ console.log('Options page loaded');
 // 配置键
 const CONFIG_KEYS = {
   ENABLE_CHATGPT: 'enable_chatgpt',
+  ENABLE_CLAUDE: 'enable_claude',
+  ENABLE_GEMINI: 'enable_gemini',
   UI_THEME: 'ui_theme',
   CUSTOM_URLS: 'custom_urls'
 };
@@ -13,18 +15,26 @@ async function loadSettings(): Promise<void> {
   try {
     const result = await chrome.storage.sync.get([
       CONFIG_KEYS.ENABLE_CHATGPT,
+      CONFIG_KEYS.ENABLE_CLAUDE,
+      CONFIG_KEYS.ENABLE_GEMINI,
       CONFIG_KEYS.UI_THEME,
       CONFIG_KEYS.CUSTOM_URLS
     ]);
     
     const enableChatGPT = result[CONFIG_KEYS.ENABLE_CHATGPT] !== false; // 默认启用
+    const enableClaude = result[CONFIG_KEYS.ENABLE_CLAUDE] !== false; // 默认启用
+    const enableGemini = result[CONFIG_KEYS.ENABLE_GEMINI] !== false; // 默认启用
     const uiTheme = result[CONFIG_KEYS.UI_THEME] || 'auto'; // 默认跟随系统
     const customUrls = result[CONFIG_KEYS.CUSTOM_URLS] || [];
     
-    const checkbox = document.getElementById('enable-chatgpt') as HTMLInputElement;
-    if (checkbox) {
-      checkbox.checked = enableChatGPT;
-    }
+    const setCheckbox = (id: string, checked: boolean) => {
+        const checkbox = document.getElementById(id) as HTMLInputElement;
+        if (checkbox) checkbox.checked = checked;
+    };
+
+    setCheckbox('enable-chatgpt', enableChatGPT);
+    setCheckbox('enable-claude', enableClaude);
+    setCheckbox('enable-gemini', enableGemini);
     
     const themeSelect = document.getElementById('ui-theme') as HTMLSelectElement;
     if (themeSelect) {
@@ -33,7 +43,7 @@ async function loadSettings(): Promise<void> {
     
     renderCustomUrls(customUrls);
     
-    console.log('设置已加载:', { enableChatGPT, uiTheme, customUrls });
+    console.log('设置已加载:', { enableChatGPT, enableClaude, enableGemini, uiTheme, customUrls });
   } catch (error) {
     console.error('加载设置失败:', error);
   }
@@ -155,14 +165,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // 加载设置
   loadSettings();
   
-  // 监听 ChatGPT 开关变化
-  const chatgptCheckbox = document.getElementById('enable-chatgpt') as HTMLInputElement;
-  if (chatgptCheckbox) {
-    chatgptCheckbox.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
-      saveSetting(CONFIG_KEYS.ENABLE_CHATGPT, target.checked);
-    });
-  }
+  // 监听开关变化
+  const bindCheckbox = (id: string, key: string) => {
+    const checkbox = document.getElementById(id) as HTMLInputElement;
+    if (checkbox) {
+      checkbox.addEventListener('change', (e) => {
+        const target = e.target as HTMLInputElement;
+        saveSetting(key, target.checked);
+      });
+    }
+  };
+
+  bindCheckbox('enable-chatgpt', CONFIG_KEYS.ENABLE_CHATGPT);
+  bindCheckbox('enable-claude', CONFIG_KEYS.ENABLE_CLAUDE);
+  bindCheckbox('enable-gemini', CONFIG_KEYS.ENABLE_GEMINI);
   
   // 监听主题选择变化
   const themeSelect = document.getElementById('ui-theme') as HTMLSelectElement;
@@ -203,4 +219,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-

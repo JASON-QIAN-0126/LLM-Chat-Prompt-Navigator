@@ -23,6 +23,12 @@ export class RightSideTimelineNavigator {
   private currentTheme: TimelineTheme = themes.light;
 
   constructor() {
+    // 确保主题已初始化
+    const savedTheme = localStorage.getItem('llm_nav_theme_cache');
+    if (savedTheme && themes[savedTheme]) {
+       this.currentTheme = themes[savedTheme];
+    }
+
     this.container = this.createContainer();
     this.timelineBar = this.createTimelineBar();
     this.tooltip = this.createTooltip();
@@ -49,8 +55,13 @@ export class RightSideTimelineNavigator {
   setTheme(mode: ThemeMode) {
     const themeType = resolveTheme(mode);
     this.currentTheme = themes[themeType];
+    // 缓存主题，防止构造函数加载时闪烁
+    localStorage.setItem('llm_nav_theme_cache', themeType);
     console.log(`🎨 Theme set to: ${themeType}`, this.currentTheme);
     
+    // 更新时间线主干颜色
+    this.timelineBar.style.backgroundColor = this.currentTheme.timelineBarColor;
+
     // 刷新所有节点样式
     this.nodes.forEach((node, index) => {
       this.updateNodeStyle(node, index);
@@ -110,9 +121,10 @@ export class RightSideTimelineNavigator {
       top: '0',
       width: '2px',
       height: '100%',
-      backgroundColor: 'rgba(150, 150, 150, 0.3)',
+      backgroundColor: this.currentTheme.timelineBarColor, // 使用主题色
       transform: 'translateX(-50%)',
-      pointerEvents: 'none'
+      pointerEvents: 'none',
+      transition: 'background-color 0.3s ease'
     });
 
     return bar;
@@ -161,7 +173,6 @@ export class RightSideTimelineNavigator {
 
     // 计算位置（显示在节点左侧）
     const rect = nodeElement.getBoundingClientRect();
-    const tooltipWidth = 200; // maxWidth
     const gap = 10; // 节点与 tooltip 之间的间距 (更紧邻)
 
     // 默认显示在左侧
@@ -209,7 +220,7 @@ export class RightSideTimelineNavigator {
       
       // 如果也被标记了，内部用重点色，否则用当前主题 Active 色
       if (isPinned) {
-        node.style.backgroundColor = '#FF9800'; // 重点色 (橙色)
+        node.style.backgroundColor = this.currentTheme.pinnedColor; // 使用主题重点色
       } else {
         node.style.backgroundColor = this.currentTheme.activeColor;
       }
@@ -218,15 +229,14 @@ export class RightSideTimelineNavigator {
       node.style.transform = 'translate(-50%, -50%) scale(1)';
       node.style.zIndex = '1';
       node.style.boxShadow = 'none';
+      node.style.border = '2px solid #fff';
       
       if (isPinned) {
         // 标记状态
-        node.style.backgroundColor = '#FF9800'; // 橙色背景
-        node.style.border = '2px solid #fff';
+        node.style.backgroundColor = this.currentTheme.pinnedColor; // 使用主题重点色
       } else {
-        // 普通状态
-        node.style.backgroundColor = '#888'; // 灰色背景
-        node.style.border = '2px solid #fff';
+        // 普通状态 (未选中)
+        node.style.backgroundColor = this.currentTheme.defaultNodeColor; // 使用主题默认色
       }
     }
   }
@@ -261,7 +271,7 @@ export class RightSideTimelineNavigator {
       left: '0',
       width: '100%',
       height: '100%',
-      backgroundColor: '#FF9800', // 重点色
+      backgroundColor: this.currentTheme.pinnedColor, // 初始色为主题重点色
       borderRadius: '50%',
       transform: 'scale(0)', // 默认隐藏
       transition: 'transform 200ms ease-out', // 默认快速回退
@@ -285,8 +295,8 @@ export class RightSideTimelineNavigator {
         // 取消标记：使用灰色/白色填充，表示"擦除"
         fillLayer.style.backgroundColor = '#E0E0E0';
       } else {
-        // 标记：使用橙色填充
-        fillLayer.style.backgroundColor = '#FF9800';
+        // 标记：使用主题定义的重点色填充
+        fillLayer.style.backgroundColor = this.currentTheme.pinnedColor;
       }
       
       // 开始动画：慢慢变大
@@ -576,5 +586,3 @@ export class RightSideTimelineNavigator {
     this.tooltip.remove();
   }
 }
-
-

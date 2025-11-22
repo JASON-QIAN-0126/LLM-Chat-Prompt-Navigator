@@ -4,30 +4,45 @@
 
 export interface TimelineTheme {
   name: string;
-  activeColor: string;      // 激活节点的颜色
+  activeColor: string;      // 激活节点的背景色
   activeShadow: string;     // 激活节点的阴影颜色
+  defaultNodeColor: string; // 默认（未激活）节点的背景色
+  timelineBarColor: string; // 时间线主干颜色
+  pinnedColor: string;      // 重点标记颜色（取代默认的橙色）
 }
 
 export const themes: Record<string, TimelineTheme> = {
   light: {
-    name: '亮色 (默认绿)',
-    activeColor: '#4CAF50',
-    activeShadow: 'rgba(76, 175, 80, 0.5)'
+    name: '亮色',
+    activeColor: '#4CAF50', // 绿色
+    activeShadow: 'rgba(76, 175, 80, 0.5)',
+    defaultNodeColor: '#888888', // 灰色
+    timelineBarColor: 'rgba(150, 150, 150, 0.3)',
+    pinnedColor: '#FF9800' // 橙色
   },
   dark: {
     name: '暗色',
-    activeColor: '#E0E0E0', // 浅灰/白，适合深色背景
-    activeShadow: 'rgba(255, 255, 255, 0.3)'
+    activeColor: '#E0E0E0', // 亮灰 (选中)
+    activeShadow: 'rgba(255, 255, 255, 0.3)',
+    defaultNodeColor: '#FFFFFF', // 白色 (默认)
+    timelineBarColor: 'rgba(255, 255, 255, 0.2)',
+    pinnedColor: '#FF9800' // 橙色 (暗色下依然醒目)
   },
   blue: {
-    name: '天蓝',
-    activeColor: '#2196F3',
-    activeShadow: 'rgba(33, 150, 243, 0.5)'
+    name: '天蓝色',
+    activeColor: '#2196F3', // 鲜亮蓝
+    activeShadow: 'rgba(33, 150, 243, 0.5)',
+    defaultNodeColor: '#90CAF9', // 浅蓝
+    timelineBarColor: 'rgba(33, 150, 243, 0.3)',
+    pinnedColor: '#0D47A1' // 深蓝 (重点)
   },
   lavender: {
     name: '薰衣草',
-    activeColor: '#9C88FF',
-    activeShadow: 'rgba(156, 136, 255, 0.5)'
+    activeColor: '#9C88FF', // 紫色
+    activeShadow: 'rgba(156, 136, 255, 0.5)',
+    defaultNodeColor: '#D1C4E9', // 浅紫
+    timelineBarColor: 'rgba(156, 136, 255, 0.3)',
+    pinnedColor: '#673AB7' // 深紫 (重点)
   }
 };
 

@@ -162,7 +162,7 @@
       </div>
       <select id="ui-theme" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; font-size: 14px;">
         <option value="auto">🌓 跟随系统</option>
-        <option value="light">🟢 亮色 (默认绿)</option>
+        <option value="light">🟢 亮色</option>
         <option value="dark">⚫ 暗色</option>
         <option value="blue">🔵 天蓝</option>
         <option value="lavender">💜 薰衣草</option>
@@ -175,10 +175,32 @@
     <div class="option-item">
       <div class="option-label">
         <span class="title">ChatGPT</span>
-        <span class="description">在 ChatGPT 对话页面启用导航功能</span>
+        <span class="description">chatgpt.com</span>
       </div>
       <label class="toggle-switch">
         <input type="checkbox" id="enable-chatgpt" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="option-item">
+      <div class="option-label">
+        <span class="title">Claude</span>
+        <span class="description">claude.ai</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="enable-claude" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="option-item">
+      <div class="option-label">
+        <span class="title">Gemini</span>
+        <span class="description">gemini.google.com</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="enable-gemini" checked>
         <span class="slider"></span>
       </label>
     </div>
@@ -222,6 +244,15 @@
         </span>
       </div>
     </div>
+    <div class="option-item" style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 10px;">
+      <div class="option-label">
+        <span class="title">标记当前对话</span>
+        <span class="description">
+          <strong>Mac:</strong> Option (⌥) + S &nbsp;|&nbsp; 
+          <strong>Win/Linux:</strong> Alt + S
+        </span>
+      </div>
+    </div>
     <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 13px;">
       💡 想要自定义快捷键？访问 
       <a href="chrome://extensions/shortcuts/" target="_blank" style="color: #4CAF50; text-decoration: none;">
@@ -241,4 +272,3 @@
   <script src="index.js" type="module"></script>
 </body>
 </html>
-

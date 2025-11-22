@@ -206,7 +206,6 @@ function initTimelineNavigator(): void {
   
   // 注册节点点击事件
   timelineNavigator.onNodeClick((itemIndex: number) => {
-// ... existing code ...
     console.log(`🖱️ Timeline: 点击了节点 ${itemIndex + 1}`);
     
     // 复用 navigateToAnswer 函数，统一管理锁逻辑
@@ -237,7 +236,7 @@ async function init() {
   
   try {
     // 从存储中加载自定义 URL
-    const settings = await chrome.storage.sync.get('custom_urls');
+    const settings = await chrome.storage.sync.get(['custom_urls', 'enable_chatgpt', 'enable_claude', 'enable_gemini']);
     const customUrls = settings.custom_urls || [];
     
     // 获取当前页面适配的站点适配器
@@ -252,18 +251,19 @@ async function init() {
     console.log(`LLM Answer Navigator: ${adapter.name} 页面已检测到，准备初始化`);
     
     // 检查是否在配置中启用了该站点
-    try {
-      const result = await chrome.storage.sync.get('enable_chatgpt');
-      const isEnabled = result.enable_chatgpt !== false; // 默认启用
-      
-      if (!isEnabled) {
-        console.log('LLM Answer Navigator: ChatGPT 导航功能已在设置中关闭');
-        isInitializing = false;
-        return;
-      }
-    } catch (error) {
-      console.error('读取配置失败:', error);
-      // 如果读取配置失败，默认继续执行
+    let isEnabled = true;
+    if (adapter.name === 'ChatGPT') {
+        isEnabled = settings.enable_chatgpt !== false;
+    } else if (adapter.name === 'Claude') {
+        isEnabled = settings.enable_claude !== false;
+    } else if (adapter.name === 'Gemini') {
+        isEnabled = settings.enable_gemini !== false;
+    }
+
+    if (!isEnabled) {
+      console.log(`LLM Answer Navigator: ${adapter.name} 导航功能已在设置中关闭`);
+      isInitializing = false;
+      return;
     }
   
   // 旧的悬浮按钮导航已被时间线导航替代，此处代码已移除
@@ -458,4 +458,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   return true; // 保持消息通道打开
 });
-

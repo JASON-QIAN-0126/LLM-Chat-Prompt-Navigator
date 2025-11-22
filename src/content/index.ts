@@ -9,6 +9,7 @@ console.log('LLM Answer Navigator: Content script loaded');
 let indexManager: AnswerIndexManager | null = null;
 let timelineNavigator: RightSideTimelineNavigator | null = null;
 let isInitializing = false; // 防止重复初始化
+let initPromise: Promise<void> | null = null; // 存储当前初始化Promise
 let isListLocked = false; // 标记列表是否已锁定（固定总数）
 let isManualScrolling = false; // 标记是否正在进行点击导航滚动
 let contentMutationObserver: MutationObserver | null = null; // 监听页面变化的观察器引用
@@ -236,18 +237,26 @@ function initTimelineNavigator(): void {
  * 初始化导航功能
  */
 async function init() {
-  // 防止重复初始化
+  // 如果正在初始化，返回现有的Promise，避免并发
+  if (isInitializing && initPromise) {
+    console.log('⏳ 正在初始化中，等待当前初始化完成');
+    return initPromise;
+  }
+  
+  // 如果已经初始化但没有Promise，说明是重复调用
   if (isInitializing) {
     console.log('⏳ 正在初始化中，跳过重复调用');
     return;
   }
   
-  // 先清理旧 UI，给用户一个“正在加载”的空白状态
-  clearUI();
-  
-  isInitializing = true;
-  
-  try {
+  // 创建初始化Promise
+  initPromise = (async () => {
+    // 先清理旧 UI，给用户一个"正在加载"的空白状态
+    clearUI();
+    
+    isInitializing = true;
+    
+    try {
     // 从存储中加载自定义 URL
     const settings = await chrome.storage.sync.get(['custom_urls', 'enable_chatgpt', 'enable_claude', 'enable_gemini']);
     const customUrls = settings.custom_urls || [];
@@ -395,7 +404,11 @@ async function init() {
   
   } finally {
     isInitializing = false;
+    initPromise = null; // 清除Promise引用
   }
+  })();
+  
+  return initPromise;
 }
 
 // 监听 URL 变化（用于检测切换对话）

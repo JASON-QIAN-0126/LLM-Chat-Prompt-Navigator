@@ -13,6 +13,37 @@ let isManualScrolling = false; // 标记是否正在进行点击导航滚动
 let contentMutationObserver: MutationObserver | null = null; // 监听页面变化的观察器引用
 let currentInitId = 0; // 初始化版本控制，防止竞态条件
 
+// Settings Cache
+let cachedSettings: { [key: string]: any } | null = null;
+
+async function getSettings() {
+  if (cachedSettings) return cachedSettings;
+  cachedSettings = await chrome.storage.sync.get([
+    'custom_urls', 
+    'enable_chatgpt', 
+    'enable_claude', 
+    'enable_gemini',
+    'ui_theme'
+  ]);
+  return cachedSettings;
+}
+
+// Listen for storage changes
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync') {
+    if (cachedSettings) {
+      for (const key in changes) {
+        cachedSettings[key] = changes[key].newValue;
+      }
+    }
+    
+    // Real-time theme update
+    if (changes.ui_theme && timelineNavigator) {
+      timelineNavigator.setTheme(changes.ui_theme.newValue || 'auto');
+    }
+  }
+});
+
 /**
  * 防抖函数
  */
@@ -196,12 +227,10 @@ function initTimelineNavigator(): void {
   timelineNavigator.setConversationId(conversationId);
 
   // 2. 加载并设置主题
-  chrome.storage.sync.get(['ui_theme'], (result) => {
-    const theme = (result.ui_theme as ThemeMode) || 'auto';
-    if (timelineNavigator) {
-      timelineNavigator.setTheme(theme);
-    }
-  });
+  const theme = (cachedSettings?.ui_theme as ThemeMode) || 'auto';
+  if (timelineNavigator) {
+    timelineNavigator.setTheme(theme);
+  }
   
   // 注册节点点击事件
   timelineNavigator.onNodeClick((itemIndex: number) => {
@@ -254,7 +283,7 @@ async function init() {
     
     try {
     // 从存储中加载自定义 URL
-    const settings = await chrome.storage.sync.get(['custom_urls', 'enable_chatgpt', 'enable_claude', 'enable_gemini']);
+    const settings = await getSettings();
     
     // 关键检查：如果在 await 期间被外部再次调用了 clearUI/init，则终止
     if (executionId !== currentInitId) return;
@@ -287,8 +316,12 @@ async function init() {
   
   // 旧的悬浮按钮导航已被时间线导航替代，此处代码已移除
   
-  // 初始化索引管理器
-  indexManager = new AnswerIndexManager(adapter, document);
+  // 尝试查找更精确的根容器（通常是 <main>）以减少不必要的扫描和监听
+    const mainElement = document.querySelector('main');
+    const rootElement = mainElement || document.body;
+    
+    // 初始化索引管理器
+    indexManager = new AnswerIndexManager(adapter, rootElement);
   
   const totalCount = indexManager.getTotalCount();
   
@@ -376,7 +409,7 @@ async function init() {
     }
   }, 1000));
   
-  contentMutationObserver.observe(document.body, {
+  contentMutationObserver.observe(rootElement, {
     childList: true,
     subtree: true
   });
@@ -393,11 +426,10 @@ async function init() {
   }
   
   } finally {
-    // 只有当我是最新的 init 时，才重置标志
-    if (executionId === currentInitId) {
-      isInitializing = false;
-      initPromise = null; // 清除Promise引用
-    }
+    // 无论是否因为版本号不一致而提前返回，都必须重置初始化状态
+    // 否则会导致死锁，后续的 init 永远无法执行
+    isInitializing = false;
+    initPromise = null;
   }
   })();
   
@@ -406,7 +438,11 @@ async function init() {
 
 // 监听 URL 变化（用于检测切换对话）
 let lastUrl = window.location.href;
-const urlObserver = new MutationObserver(() => {
+
+/**
+ * 处理 URL 变化
+ */
+function handleUrlChange() {
   const currentUrl = window.location.href;
   if (currentUrl !== lastUrl) {
     lastUrl = currentUrl;
@@ -422,20 +458,21 @@ const urlObserver = new MutationObserver(() => {
       init();
     }, 1000);
   }
-});
+}
 
-// 监听整个文档的变化以检测 URL 改变
-urlObserver.observe(document.documentElement, {
-  childList: true,
-  subtree: true
-});
+// 使用轮询检测 URL 变化 (替代昂贵的全局 MutationObserver)
+setInterval(handleUrlChange, 1000);
 
-// 同时监听 popstate 事件（浏览器前进后退）
+// 监听 popstate 事件（浏览器前进后退）
 window.addEventListener('popstate', () => {
-  setTimeout(() => {
-    init();
-  }, 500);
+  // 给一点时间让 URL 更新
+  setTimeout(handleUrlChange, 100);
 });
+
+// 监听点击事件，以便在点击链接时更快响应
+document.addEventListener('click', () => {
+  setTimeout(handleUrlChange, 200);
+}, { capture: true, passive: true });
 
 // 页面加载完成后初始化
 if (document.readyState === 'loading') {
@@ -471,5 +508,5 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
   }
   
-  return true; // 保持消息通道打开
+  // 所有消息都同步处理完成，不需要返回 true
 });

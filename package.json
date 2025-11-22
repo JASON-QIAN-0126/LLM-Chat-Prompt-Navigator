@@ -1,0 +1,18 @@
+{
+  "name": "llm-answer-navigator",
+  "version": "1.0.0",
+  "description": "Chrome 扩展：在 LLM 对话页面中提供回答导航功能",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js --watch"
+  },
+  "keywords": ["chrome-extension", "llm", "chatgpt", "navigation"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chrome": "^0.0.268",
+    "esbuild": "^0.19.0",
+    "typescript": "^5.3.0"
+  }
+}
+

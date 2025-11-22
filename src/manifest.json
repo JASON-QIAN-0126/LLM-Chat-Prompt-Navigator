@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "LLM Answer Navigator",
+  "version": "1.0.0",
+  "description": "在 LLM 对话页面中快速导航 AI 回答",
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background/index.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": ["content/index.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "prev-answer": {
+      "suggested_key": {
+        "default": "Alt+Up",
+        "mac": "Alt+Up"
+      },
+      "description": "跳转到上一条回答"
+    },
+    "next-answer": {
+      "suggested_key": {
+        "default": "Alt+Down",
+        "mac": "Alt+Down"
+      },
+      "description": "跳转到下一条回答"
+    }
+  },
+  "options_page": "options/index.html",
+  "action": {
+    "default_popup": "popup/index.html"
+  }
+}
+

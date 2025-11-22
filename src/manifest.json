@@ -26,15 +26,15 @@
   "commands": {
     "prev-answer": {
       "suggested_key": {
-        "default": "Alt+Up",
-        "mac": "MacCtrl+Up"
+        "default": "Alt+W",
+        "mac": "Alt+W"
       },
       "description": "Go to previous answer"
     },
     "next-answer": {
       "suggested_key": {
-        "default": "Alt+Down",
-        "mac": "MacCtrl+Down"
+        "default": "Alt+S",
+        "mac": "Alt+S"
       },
       "description": "Go to next answer"
     },
@@ -47,8 +47,8 @@
     },
     "toggle-pin": {
       "suggested_key": {
-        "default": "Alt+S",
-        "mac": "Alt+S"
+        "default": "Alt+A",
+        "mac": "Alt+A"
       },
       "description": "Toggle Pin for current answer"
     }

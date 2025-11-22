@@ -1,6 +1,14 @@
 /**
  * 站点适配器接口
  * 每个站点适配器需要实现这个接口
+ * 
+ * 如何添加新站点适配器：
+ * 1. 创建新文件，例如 yourSiteAdapter.ts
+ * 2. 实现 SiteAdapter 接口
+ * 3. 在本文件中导入并添加到 adapters 数组
+ * 4. 在 manifest.json 中添加站点的 URL 匹配规则
+ * 
+ * 详细说明请参考 ADAPTER_GUIDE.md
  */
 export interface SiteAdapter {
   /**

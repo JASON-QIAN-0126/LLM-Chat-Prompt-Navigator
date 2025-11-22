@@ -262,7 +262,6 @@ export class AnswerIndexManager {
     // 只有当索引真正改变时才更新
     if (this.currentIndex !== activeIndex) {
       this.currentIndex = activeIndex;
-      console.log(`📍 滚动检测: 切换到第 ${activeIndex + 1} 个 (实时位置)`);
     }
   }
 

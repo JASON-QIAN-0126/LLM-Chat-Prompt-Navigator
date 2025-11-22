@@ -63,7 +63,6 @@ export class RightSideTimelineNavigator {
     this.currentTheme = themes[themeType];
     // 缓存主题，防止构造函数加载时闪烁
     localStorage.setItem('llm_nav_theme_cache', themeType);
-    console.log(`🎨 Theme set to: ${themeType}`, this.currentTheme);
     
     // 更新时间线主干颜色
     this.timelineBar.style.backgroundColor = this.currentTheme.timelineBarColor;
@@ -84,7 +83,6 @@ export class RightSideTimelineNavigator {
     this.nodes.forEach((node, index) => {
       this.updateNodeStyle(node, index);
     });
-    console.log(`📌 Loaded pinned nodes for ${id}:`, this.pinnedNodes);
   }
 
   /**
@@ -311,7 +309,6 @@ export class RightSideTimelineNavigator {
       
       pressTimer = setTimeout(async () => {
         isLongPress = true;
-        console.log(`🖱️ Long press detected on node ${index}`);
         
         if (this.conversationId) {
           const nodeId = String(index);
@@ -404,7 +401,6 @@ export class RightSideTimelineNavigator {
     const currentCount = this.nodes.length;
 
     if (newCount === 0) {
-      console.warn('⚠️ Timeline: 没有对话条目');
       // 清空节点
       this.nodes.forEach(node => node.remove());
       this.nodes = [];
@@ -447,8 +443,6 @@ export class RightSideTimelineNavigator {
 
     // 3. 计算并更新所有节点位置（利用 CSS transition 实现平滑移动）
     this.updateNodePositions();
-
-    console.log(`✅ Timeline: 更新完成，当前 ${this.nodes.length} 个节点`);
   }
 
   /**
@@ -577,10 +571,8 @@ export class RightSideTimelineNavigator {
     
     if (newPinnedState) {
       this.pinnedNodes.add(nodeId);
-      console.log(`📌 快捷键：已标记节点 ${index}`);
     } else {
       this.pinnedNodes.delete(nodeId);
-      console.log(`📌 快捷键：取消标记节点 ${index}`);
     }
     
     // 更新样式

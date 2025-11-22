@@ -249,7 +249,26 @@ export class RightSideTimelineNavigator {
       cursor: 'pointer',
       transform: 'translate(-50%, -50%)',
       pointerEvents: 'auto',
+      overflow: 'hidden', // 确保内部填充层不溢出
     });
+    
+    // 填充层（用于长按动画）
+    const fillLayer = document.createElement('div');
+    fillLayer.className = 'fill-layer';
+    Object.assign(fillLayer.style, {
+      position: 'absolute',
+      top: '0',
+      left: '0',
+      width: '100%',
+      height: '100%',
+      backgroundColor: '#FF9800', // 重点色
+      borderRadius: '50%',
+      transform: 'scale(0)', // 默认隐藏
+      transition: 'transform 200ms ease-out', // 默认快速回退
+      pointerEvents: 'none',
+      zIndex: '0'
+    });
+    node.appendChild(fillLayer);
     
     this.updateNodeStyle(node, index);
 
@@ -259,6 +278,16 @@ export class RightSideTimelineNavigator {
 
     const startPress = () => {
       isLongPress = false;
+      
+      // 如果当前已经标记了，那么填充层应该是可见的，长按是“消退”
+      // 但为了简化交互，我们统一用“填充”来表示操作进行中
+      // 如果是取消标记，我们可以用另一个颜色，或者反向动画
+      // 这里简单处理：总是填充橙色，表示“正在进行标记操作”
+      
+      // 开始动画：慢慢变大
+      fillLayer.style.transition = 'transform 500ms linear';
+      fillLayer.style.transform = 'scale(1)';
+      
       pressTimer = setTimeout(async () => {
         isLongPress = true;
         console.log(`🖱️ Long press detected on node ${index}`);
@@ -278,6 +307,9 @@ export class RightSideTimelineNavigator {
           // 震动反馈 (如果支持)
           if (navigator.vibrate) navigator.vibrate(50);
         }
+        
+        // 无论结果如何，重置填充层（因为状态改变后 updateNodeStyle 会处理背景色）
+        // 但为了视觉连贯性，我们让它保持满，直到鼠标松开
       }, 500); // 500ms 长按阈值
     };
 
@@ -286,6 +318,10 @@ export class RightSideTimelineNavigator {
         clearTimeout(pressTimer);
         pressTimer = null;
       }
+      
+      // 动画回退
+      fillLayer.style.transition = 'transform 200ms ease-out';
+      fillLayer.style.transform = 'scale(0)';
     };
 
     // 鼠标/触摸事件处理
@@ -295,6 +331,8 @@ export class RightSideTimelineNavigator {
     node.addEventListener('mouseup', cancelPress);
     node.addEventListener('mouseleave', cancelPress);
     node.addEventListener('touchend', cancelPress);
+
+    // ... (其余事件监听保持不变)
 
     // 鼠标悬浮效果 + 显示 tooltip
     node.addEventListener('mouseenter', () => {

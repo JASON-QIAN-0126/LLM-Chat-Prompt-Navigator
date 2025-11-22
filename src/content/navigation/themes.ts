@@ -22,7 +22,7 @@ export const themes: Record<string, TimelineTheme> = {
     timelineBarColor: 'rgba(150, 150, 150, 0.3)',
     pinnedColor: '#0277BD', // 深蓝
     tooltipBackgroundColor: 'rgba(255, 255, 255, 0.95)',
-    tooltipTextColor: '#FFFFFF' // 白色
+    tooltipTextColor: '#000000' // 黑色
   },
   dark: {
     name: '暗色',

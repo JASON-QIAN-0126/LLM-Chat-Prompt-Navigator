@@ -84,7 +84,7 @@ const handleScroll = debounce(() => {
 /**
  * 初始化导航功能
  */
-function init() {
+async function init() {
   // 获取当前页面适配的站点适配器
   const adapter = getActiveAdapter(window.location);
   
@@ -94,6 +94,20 @@ function init() {
   }
   
   console.log(`LLM Answer Navigator: ${adapter.name} 页面已检测到，准备初始化`);
+  
+  // 检查是否在配置中启用了该站点
+  try {
+    const result = await chrome.storage.sync.get('enable_chatgpt');
+    const isEnabled = result.enable_chatgpt !== false; // 默认启用
+    
+    if (!isEnabled) {
+      console.log('LLM Answer Navigator: ChatGPT 导航功能已在设置中关闭');
+      return;
+    }
+  } catch (error) {
+    console.error('读取配置失败:', error);
+    // 如果读取配置失败，默认继续执行
+  }
   
   // 初始化索引管理器
   indexManager = new AnswerIndexManager(adapter, document);

@@ -5,28 +5,186 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LLM Answer Navigator - 设置</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      padding: 20px;
-      max-width: 600px;
+      padding: 40px 20px;
+      max-width: 800px;
       margin: 0 auto;
+      background: #f5f5f5;
     }
+    
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+    
     h1 {
       color: #333;
+      font-size: 28px;
+      margin-bottom: 8px;
     }
+    
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+    }
+    
     .option-group {
-      margin: 20px 0;
-      padding: 15px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+      background: white;
+      padding: 25px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .option-group h2 {
+      color: #333;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    
+    .option-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .option-item:last-child {
+      border-bottom: none;
+    }
+    
+    .option-label {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .option-label .title {
+      color: #333;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .option-label .description {
+      color: #666;
+      font-size: 13px;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 26px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .3s;
+      border-radius: 26px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+    
+    .save-status {
+      text-align: center;
+      padding: 10px;
+      margin-top: 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .save-status.success {
+      display: block;
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #666;
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
-  <h1>LLM Answer Navigator 设置</h1>
-  <div class="option-group">
-    <p>设置页面骨架 - 后续将添加配置选项</p>
+  <div class="header">
+    <h1>🧭 LLM Answer Navigator</h1>
+    <p class="subtitle">在 LLM 对话页面中快速导航 AI 回答</p>
   </div>
+  
+  <div class="option-group">
+    <h2>站点支持</h2>
+    <div class="option-item">
+      <div class="option-label">
+        <span class="title">ChatGPT</span>
+        <span class="description">在 ChatGPT 对话页面启用导航功能</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="enable-chatgpt" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+  
+  <div class="option-group">
+    <h2>快捷键</h2>
+    <div class="option-item">
+      <div class="option-label">
+        <span class="title">导航快捷键</span>
+        <span class="description">Alt + ↑ 上一条 / Alt + ↓ 下一条</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="save-status" id="save-status">
+    ✓ 设置已保存
+  </div>
+  
+  <div class="footer">
+    <p>Version 1.0.0 | LLM Answer Navigator</p>
+  </div>
+  
   <script src="index.js" type="module"></script>
 </body>
 </html>

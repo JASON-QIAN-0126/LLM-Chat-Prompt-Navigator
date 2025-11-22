@@ -1,4 +1,4 @@
-<h1 align="center">AI Chat Prompt Navigator</h1>
+<h1 align="center">AI Chat Quick Navigator</h1>
 
 <p align="center">
   <strong>Make AI Conversation Navigation Simple and Efficient</strong>

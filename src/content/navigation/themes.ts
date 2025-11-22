@@ -2,67 +2,52 @@
  * 主题配置
  */
 
-export interface Theme {
+export interface TimelineTheme {
   name: string;
-  primary: string;
-  primaryHover: string;
-  primaryActive: string;
-  border: string;
-  background: string;
-  textColor: string;
-  highlightBorder: string;
-  highlightBackground: string;
+  activeColor: string;      // 激活节点的背景色
+  activeShadow: string;     // 激活节点的阴影颜色
+  defaultNodeColor: string; // 默认（未激活）节点的背景色
+  timelineBarColor: string; // 时间线主干颜色
+  pinnedColor: string;      // 重点标记颜色（取代默认的橙色）
 }
 
-export const themes: Record<string, Theme> = {
-  green: {
-    name: '绿色',
-    primary: '#4CAF50',
-    primaryHover: '#45a049',
-    primaryActive: '#3d8b40',
-    border: '#4CAF50',
-    background: 'rgba(255, 255, 255, 0.95)',
-    textColor: '#333',
-    highlightBorder: '#4CAF50',
-    highlightBackground: 'rgba(76, 175, 80, 0.1)',
-  },
-  lavender: {
-    name: '薰衣草紫',
-    primary: '#9C88FF',
-    primaryHover: '#8B76EE',
-    primaryActive: '#7A65DD',
-    border: '#9C88FF',
-    background: 'rgba(255, 255, 255, 0.95)',
-    textColor: '#333',
-    highlightBorder: '#9C88FF',
-    highlightBackground: 'rgba(156, 136, 255, 0.1)',
+export const themes: Record<string, TimelineTheme> = {
+  light: {
+    name: '亮色',
+    activeColor: '#4CAF50', // 绿色
+    activeShadow: 'rgba(76, 175, 80, 0.5)',
+    defaultNodeColor: '#888888', // 灰色
+    timelineBarColor: 'rgba(150, 150, 150, 0.3)',
+    pinnedColor: '#FF9800' // 橙色
   },
   dark: {
     name: '暗色',
-    primary: '#6B7280',
-    primaryHover: '#4B5563',
-    primaryActive: '#374151',
-    border: '#4B5563',
-    background: 'rgba(30, 30, 30, 0.95)',
-    textColor: '#E5E7EB',
-    highlightBorder: '#6B7280',
-    highlightBackground: 'rgba(107, 114, 128, 0.15)',
+    activeColor: '#E0E0E0', // 亮灰 (选中)
+    activeShadow: 'rgba(255, 255, 255, 0.3)',
+    defaultNodeColor: '#FFFFFF', // 白色 (默认)
+    timelineBarColor: 'rgba(255, 255, 255, 0.2)',
+    pinnedColor: '#FF9800' // 橙色 (暗色下依然醒目)
   },
-  light: {
-    name: '亮色',
-    primary: '#3B82F6',
-    primaryHover: '#2563EB',
-    primaryActive: '#1D4ED8',
-    border: '#3B82F6',
-    background: 'rgba(255, 255, 255, 0.98)',
-    textColor: '#1F2937',
-    highlightBorder: '#3B82F6',
-    highlightBackground: 'rgba(59, 130, 246, 0.1)',
+  blue: {
+    name: '天蓝色',
+    activeColor: '#2196F3', // 鲜亮蓝
+    activeShadow: 'rgba(33, 150, 243, 0.5)',
+    defaultNodeColor: '#90CAF9', // 浅蓝
+    timelineBarColor: 'rgba(33, 150, 243, 0.3)',
+    pinnedColor: '#0D47A1' // 深蓝 (重点)
   },
+  lavender: {
+    name: '薰衣草',
+    activeColor: '#9C88FF', // 紫色
+    activeShadow: 'rgba(156, 136, 255, 0.5)',
+    defaultNodeColor: '#D1C4E9', // 浅紫
+    timelineBarColor: 'rgba(156, 136, 255, 0.3)',
+    pinnedColor: '#673AB7' // 深紫 (重点)
+  }
 };
 
 export type ThemeType = keyof typeof themes;
-export type ThemeMode = ThemeType | 'auto'; // auto 表示跟随系统
+export type ThemeMode = ThemeType | 'auto';
 
 /**
  * 根据系统主题获取对应的主题
@@ -72,19 +57,21 @@ export function getSystemTheme(): ThemeType {
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     return 'dark';
   }
-  // 浅色模式使用亮色主题（白黑搭配）
   return 'light';
 }
 
 /**
- * 根据主题模式获取实际应用的主题
+ * 根据模式解析实际主题
  */
 export function resolveTheme(mode: ThemeMode): ThemeType {
   if (mode === 'auto') {
     return getSystemTheme();
   }
+  // 如果是不存在的 mode，回退到 light
+  if (!themes[mode]) {
+    return 'light';
+  }
   return mode as ThemeType;
 }
 
-export const DEFAULT_THEME_MODE: ThemeMode = 'auto'; // 默认跟随系统
-
+export const DEFAULT_THEME_MODE: ThemeMode = 'auto';

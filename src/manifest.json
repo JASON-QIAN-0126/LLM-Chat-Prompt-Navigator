@@ -1,48 +1,56 @@
 {
   "manifest_version": 3,
-  "name": "LLM Answer Navigator",
-  "version": "1.2.0",
-  "description": "在 LLM 对话页面中快速导航 AI 回答",
+  "name": "LLM Chat Prompt Navigator",
+  "version": "1.2.1",
+  "description": "LLM 对话快捷导航助手。支持 ChatGPT、Claude、Gemini，提供快捷键跳转、侧边时间线导航和重点对话标记功能。",
   "permissions": [
     "tabs",
     "scripting",
     "storage"
   ],
   "background": {
-    "service_worker": "background/index.js",
-    "type": "module"
+    "service_worker": "background/index.js"
   },
   "content_scripts": [
     {
       "matches": [
         "https://chatgpt.com/*",
-        "https://chat.openai.com/*"
+        "https://claude.ai/*",
+        "https://gemini.google.com/*"
       ],
-      "js": ["content/index.js"],
-      "run_at": "document_idle"
+      "js": [
+        "content/index.js"
+      ]
     }
   ],
   "commands": {
     "prev-answer": {
       "suggested_key": {
         "default": "Alt+Up",
-        "mac": "Alt+Up"
+        "mac": "MacCtrl+Up"
       },
-      "description": "跳转到上一条回答"
+      "description": "Go to previous answer"
     },
     "next-answer": {
       "suggested_key": {
         "default": "Alt+Down",
-        "mac": "Alt+Down"
+        "mac": "MacCtrl+Down"
       },
-      "description": "跳转到下一条回答"
+      "description": "Go to next answer"
     },
     "toggle-ui": {
       "suggested_key": {
         "default": "Alt+D",
         "mac": "Alt+D"
       },
-      "description": "显示/隐藏导航面板"
+      "description": "Toggle Navigation UI"
+    },
+    "toggle-pin": {
+      "suggested_key": {
+        "default": "Alt+S",
+        "mac": "Alt+S"
+      },
+      "description": "Toggle Pin for current answer"
     }
   },
   "options_page": "options/index.html",
@@ -50,4 +58,3 @@
     "default_popup": "popup/index.html"
   }
 }
-

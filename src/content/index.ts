@@ -157,6 +157,29 @@ function clearUI(): void {
 }
 
 /**
+ * 从 URL 或页面中获取对话 ID
+ */
+function getConversationId(): string {
+  const pathname = window.location.pathname;
+  
+  // 尝试从 URL 匹配 /c/UUID
+  const match = pathname.match(/\/c\/([a-zA-Z0-9-]+)/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  
+  // 如果是根路径，可能是新对话，尝试查找 meta 标签或特定元素
+  // 这里暂时使用 pathname 作为 ID (例如 "/" 或 "/chat")
+  // 为了避免不同新对话共享状态，最好能找到唯一标识
+  // 但如果没有唯一标识，只能暂时不持久化或使用临时 ID
+  return pathname === '/' ? 'new-chat' : pathname;
+}
+
+import type { ThemeMode } from './navigation/themes';
+
+// ... existing imports ...
+
+/**
  * 初始化时间线导航器
  */
 function initTimelineNavigator(): void {
@@ -168,6 +191,18 @@ function initTimelineNavigator(): void {
   }
   
   timelineNavigator = new RightSideTimelineNavigator();
+  
+  // 1. 设置对话 ID
+  const conversationId = getConversationId();
+  timelineNavigator.setConversationId(conversationId);
+
+  // 2. 加载并设置主题
+  chrome.storage.sync.get(['ui_theme'], (result) => {
+    const theme = (result.ui_theme as ThemeMode) || 'auto';
+    if (timelineNavigator) {
+      timelineNavigator.setTheme(theme);
+    }
+  });
   
   // 注册节点点击事件
   timelineNavigator.onNodeClick((itemIndex: number) => {
@@ -200,8 +235,12 @@ async function init() {
   isInitializing = true;
   
   try {
+    // 从存储中加载自定义 URL
+    const settings = await chrome.storage.sync.get(['custom_urls', 'enable_chatgpt', 'enable_claude', 'enable_gemini']);
+    const customUrls = settings.custom_urls || [];
+    
     // 获取当前页面适配的站点适配器
-    const adapter = getActiveAdapter(window.location);
+    const adapter = getActiveAdapter(window.location, customUrls);
     
     if (!adapter) {
       console.log('LLM Answer Navigator: 当前页面不支持，跳过初始化');
@@ -212,18 +251,19 @@ async function init() {
     console.log(`LLM Answer Navigator: ${adapter.name} 页面已检测到，准备初始化`);
     
     // 检查是否在配置中启用了该站点
-    try {
-      const result = await chrome.storage.sync.get('enable_chatgpt');
-      const isEnabled = result.enable_chatgpt !== false; // 默认启用
-      
-      if (!isEnabled) {
-        console.log('LLM Answer Navigator: ChatGPT 导航功能已在设置中关闭');
-        isInitializing = false;
-        return;
-      }
-    } catch (error) {
-      console.error('读取配置失败:', error);
-      // 如果读取配置失败，默认继续执行
+    let isEnabled = true;
+    if (adapter.name === 'ChatGPT') {
+        isEnabled = settings.enable_chatgpt !== false;
+    } else if (adapter.name === 'Claude') {
+        isEnabled = settings.enable_claude !== false;
+    } else if (adapter.name === 'Gemini') {
+        isEnabled = settings.enable_gemini !== false;
+    }
+
+    if (!isEnabled) {
+      console.log(`LLM Answer Navigator: ${adapter.name} 导航功能已在设置中关闭`);
+      isInitializing = false;
+      return;
     }
   
   // 旧的悬浮按钮导航已被时间线导航替代，此处代码已移除
@@ -402,8 +442,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     } else {
       sendResponse({ success: false, error: 'Timeline not initialized' });
     }
+  } else if (message.type === 'LLM_NAV_UPDATE_THEME') {
+    console.log('配置更新：切换主题', message.theme);
+    if (timelineNavigator) {
+      timelineNavigator.setTheme(message.theme);
+    }
+    sendResponse({ success: true });
+  } else if (message.type === 'LLM_NAV_TOGGLE_PIN') {
+    console.log('快捷键触发：标记/取消标记当前节点');
+    if (timelineNavigator) {
+      timelineNavigator.togglePinnedCurrent();
+    }
+    sendResponse({ success: true });
   }
   
   return true; // 保持消息通道打开
 });
-

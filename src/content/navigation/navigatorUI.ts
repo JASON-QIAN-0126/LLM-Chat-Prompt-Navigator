@@ -130,7 +130,7 @@ export class NavigatorUI {
    */
   private updateDisplay(): void {
     if (this.totalCount === 0) {
-      this.indexDisplay.textContent = '加载中...';
+      this.indexDisplay.textContent = '...';
       this.prevButton.disabled = true;
       this.nextButton.disabled = true;
       this.prevButton.style.opacity = '0.5';
@@ -205,7 +205,7 @@ export class NavigatorUI {
    */
   setLoading(loading: boolean): void {
     if (loading) {
-      this.indexDisplay.textContent = '加载中...';
+      this.indexDisplay.textContent = '...';
       this.prevButton.disabled = true;
       this.nextButton.disabled = true;
       this.prevButton.style.opacity = '0.5';

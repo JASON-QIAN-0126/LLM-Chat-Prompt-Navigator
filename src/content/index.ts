@@ -148,15 +148,12 @@ const handleResize = debounce(() => {
  * 处理滚动事件
  */
 const handleScroll = debounce(() => {
-  // 如果正在执行点击导航，忽略滚动事件，防止覆盖目标索引
+  // 如果正在执行点击导航，忽略滚动事件
   if (isManualScrolling) {
     return;
   }
 
-  if (indexManager) {
-    indexManager.updateCurrentIndexByScroll(window.scrollY);
-    updateUI();
-  }
+  // 仅用于其他可能的滚动逻辑，索引更新已移交 IntersectionObserver
 }, 100);
 
 /**
@@ -318,6 +315,11 @@ async function init() {
     
     // 初始化索引管理器
     indexManager = new AnswerIndexManager(adapter, rootElement);
+    
+    // 注册索引变更回调，自动更新 UI
+    indexManager.onIndexChange((index) => {
+      updateUI();
+    });
   
   const totalCount = indexManager.getTotalCount();
   

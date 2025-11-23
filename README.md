@@ -1,7 +1,7 @@
 <h1 align="center">AI Chat Quick Navigator</h1>
 
 <p align="center">
-  <strong>Make AI Conversation Navigation Simple and Efficient</strong>
+  <strong>让 AI 对话导航变得简单高效</strong>
 </p>
 
 <p align="center">
@@ -21,94 +21,74 @@
 
 ---
 
-## 📖 What is this?
+### 👍 官方Website 快速了解一切
 
-When using AI chat tools like ChatGPT, Claude, Gemini, or DeepSeek, have you ever encountered these frustrations:
+- 代插入URL
 
-- 💬 **Conversations too long** - wanting to review a previous question but having to scroll endlessly
-- 🔍 **Can't find key points** - important conversations buried in lengthy chat history
-- ⏱️ **Time wasted** - repeatedly scrolling up and down through long conversations
+### ❌ 不使用 AI Chat Quick Navigator
 
-**AI Chat Prompt Navigator** was created to solve these problems! It's a browser extension that lets you **quickly jump, mark highlights, and instantly locate** any question and answer in AI conversation pages.
+在使用 ChatGPT、Claude、Gemini、Deepseek 等 AI 聊天工具时：
 
-## ✨ Key Features
+- 💬 **对话太长**，想回看之前的某个问题，却要不停滚动鼠标
+- 🔍 **找不到重点**，重要的对话内容淹没在长长的聊天记录中
+- ⏱️ **浪费时间**，在冗长的对话中反复上下翻找
 
-### 🎯 **Conversation History Navigator (Right Side)**
-- Shows a slim navigation bar on the right; each dot represents **one of your previous prompts in this conversation**
-- **Hover preview** of prompt content (shows first 80 characters)
-- **Click any dot** to instantly jump to that request and its answer, with highlighting
-- Automatically follows your scroll position so the active dot always matches what you're looking at
+**AI Chat Prompt Navigator** 就是为了解决这些问题而生！这是一款浏览器扩展，让您可以在 AI 对话页面中**快速跳转、标记重点、一键定位**任何一条提问和回答。
 
-### ⌨️ **Powerful Keyboard Shortcuts**
-- **Alt + W / Alt + S**: Quickly switch to previous/next answer
-- **Alt + A**: Mark/unmark current conversation (highlight important content)
-- **Alt + D**: Show/hide the right-side history bar (collapse when you need to focus)
-- Supports Mac and Windows, shortcuts are customizable
+### ✅ AI Chat Quick Navigator 核心功能
 
-### 📌 **Smart Marking Feature**
-- **Long-press node for 0.5 seconds** to mark important conversations
-- Marked conversations display in **special colors** for easy retrieval
-- Marking status **auto-saves**, persists after switching conversations
-- Supports keyboard shortcut to quickly mark currently viewed conversation
+#### 🎯 **右侧历史对话导航条**
+- 页面右侧会出现一列小圆点，每一个都代表你在当前对话里发过的一次提问
+- **鼠标悬停**即可预览提问内容
+- **点击小圆点**立即跳转到对应位置，并高亮显示
+- 自动跟踪当前浏览位置，右侧的小圆点会自动跟随当前这条提问
 
-### 🌐 **Multi-Platform Support**
+#### ⌨️ **强大的快捷键支持**
+- **Alt + W / Alt + S**：快速切换上一个/下一个回答
+- **Alt + A**：标记/取消标记当前对话（重点内容一目了然）
+- **Alt + D**：显示/隐藏右侧历史对话导航条（需要专注时可以收起）
+- 支持 Mac 和 Windows 系统，快捷键可自定义
+
+#### 📌 **智能标记功能**
+- **长按节点 0.5 秒**即可标记重要对话
+- 标记的对话圆点会以**特殊颜色**高亮显示，方便后续查找
+- 标记状态**自动保存**，切换对话后依然保留
+- 支持快捷键快速标记当前正在查看的对话
+
+#### 🎨 **主题自适应**
+- 支持**自动/浅色/深色/天蓝色/薰衣草/粉红/橘黄**多种主题模式
+- 极简的设计，不增加视觉负担
+
+#### 🌐 **多平台支持**
 - ✅ **ChatGPT** (chatgpt.com)
 - ✅ **Claude** (claude.ai)
 - ✅ **Gemini** (gemini.google.com)
-- ✅ **DeepSeek** (chat.deepseek.com)
-- 🔧 Supports custom URLs (add other AI chat websites in settings)
+- ✅ **Deepseek** (chat.deepseek.com)
+- 🔧 支持自定义 URL（可在设置中添加其他 AI 聊天网站）
 
-### 🎨 **Theme Adaptive**
-- Supports **Auto/Light/Dark/Skyblue/Lavender/Pink/Orange** theme modes
-- Automatically follows system theme switching
-- Navigator colors perfectly blend with page style
+### 🚀 如何使用
 
-## 🚀 How to Use
+#### Chrome 网上应用店（推荐）
+即将上线，敬请期待...
 
-### Install Extension
-1. Download and install **AI Chat Prompt Navigator** extension
-2. Open ChatGPT, Claude, Gemini, or DeepSeek conversation page
-3. A right-side conversation history bar will automatically appear on the page
-
-### Basic Operations
-- **View conversations**: Hover over the history dots on the right to preview prompt content
-- **Quick jump**: Click any dot to instantly jump to that request and its answer
-- **Mark highlights**: Long-press node for 0.5 seconds, or press `Alt + A` to mark current conversation
-- **Keyboard navigation**: Use `Alt + W/S` to quickly switch between conversations
-
-### Advanced Settings
-1. Right-click the extension icon in browser toolbar
-2. Select **"Options"** to enter settings page
-3. You can:
-   - Switch theme mode (Auto/Light/Dark/Skyblue/Lavender/Pink/Orange)
-   - Enable/disable specific website support
-   - Add custom AI chat website URLs
-
-## 💡 Use Cases
-
-- 📚 **Learning & Research**: Review previous questions and AI answers, quickly locate knowledge points
-- 💼 **Work Efficiency**: Quickly find key information and decision points in long conversations
-- 🎓 **Teaching & Demo**: When showing AI conversations to others, quickly jump to important content
-- 📝 **Content Organization**: Mark important conversations for easy copying and organizing later
-
-## 🛠️ Technical Notes
-
-This extension is built with **TypeScript** and **Chrome Extension Manifest V3**, using a lightweight architecture that won't affect page performance. All data is stored locally to protect your privacy.
-
-## 📦 Installation
-
-### Chrome Web Store (Recommended)
-Coming soon...
-
-### Manual Installation (Developer Mode)
-1. Clone or download this project
-2. Run in the project root directory:
+#### 手动安装（开发者模式）
+1. 克隆或下载本项目代码
+2. 在项目根目录执行：
    ```bash
    npm install
    npm run build
    ```
-3. Open Chrome browser and navigate to `chrome://extensions/`
-4. Enable "Developer mode" in the top right corner
-5. Click "Load unpacked" and select the `dist` folder in the project
+3. 打开 Chrome 浏览器，进入 `chrome://extensions/`
+4. 开启右上角的"开发者模式"
+5. 点击"加载已解压的扩展程序"，选择项目中的 `dist` 文件夹
+
+### 🛠️ 技术说明
+
+本扩展基于 **TypeScript** 和 **Chrome Extension Manifest V3** 开发，采用轻量级架构，不会影响页面性能。所有数据均存储在本地，保护您的隐私安全。
+
+### 📄 许可证
+
+MIT
 
 ---
+

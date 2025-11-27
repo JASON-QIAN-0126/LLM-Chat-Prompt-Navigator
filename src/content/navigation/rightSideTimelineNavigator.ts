@@ -1,6 +1,8 @@
 import type { PromptAnswerItem } from './answerIndexManager';
 import { PinnedStore } from '../store/pinnedStore';
+import { FavoriteStore, type FavoriteConversation } from '../store/favoriteStore';
 import { themes, resolveTheme, type ThemeMode, type TimelineTheme } from './themes';
+import { getTranslation, getSystemLanguage, type Language } from '../../utils/i18n';
 
 /**
  * 右侧时间线导航器
@@ -20,6 +22,15 @@ export class RightSideTimelinejump {
   private resizeObserver: ResizeObserver | null = null;
   private conversationId: string | null = null;
   private pinnedNodes: Set<string> = new Set();
+  
+  // 收藏功能相关
+  private topStarButton: HTMLElement | null = null;
+  private bottomStarsButton: HTMLElement | null = null;
+  private favoritesModal: HTMLElement | null = null;
+  private isFavorited: boolean = false;
+  private siteName: string = '';
+  private currentLanguage: Language = 'auto';
+  private currentUrl: string = '';
 
   private contentHeight: number = 0;
   private slider: HTMLElement | null = null;
@@ -60,6 +71,10 @@ export class RightSideTimelinejump {
     document.body.appendChild(this.container);
     document.body.appendChild(this.tooltip);
 
+    // 创建顶部单星按钮和底部三星按钮
+    this.createTopStarButton();
+    this.createBottomStarsButton();
+    
     this.createSlider();
     this.nodesWrapper.addEventListener('scroll', this.handleWrapperScroll, { passive: true });
     
@@ -107,6 +122,12 @@ export class RightSideTimelinejump {
     this.nodes.forEach((node, index) => {
       this.updateNodeStyle(node, index);
     });
+    
+    // 更新星星按钮样式
+    this.updateTopStarStyle();
+    if (this.bottomStarsButton) {
+      this.bottomStarsButton.style.color = this.currentTheme.defaultNodeColor;
+    }
   }
 
   /**
@@ -114,10 +135,923 @@ export class RightSideTimelinejump {
    */
   async setConversationId(id: string) {
     this.conversationId = id;
+    this.currentUrl = window.location.href;
     this.pinnedNodes = await PinnedStore.loadPinned(id);
+    
+    // 检查是否已收藏，或者有被标记的节点（自动点亮）
+    const isExplicitlyFavorited = await FavoriteStore.isFavorited(id);
+    const hasPinnedNodes = this.pinnedNodes.size > 0;
+    this.isFavorited = isExplicitlyFavorited || hasPinnedNodes;
+    
+    // 如果有标记节点但未收藏，自动创建收藏
+    if (hasPinnedNodes && !isExplicitlyFavorited) {
+      // 延迟自动收藏，等待 items 加载完成
+      setTimeout(() => this.autoFavoriteIfNeeded(), 500);
+    }
+    
+    this.updateTopStarStyle();
+    
     // 重新应用样式
     this.nodes.forEach((node, index) => {
       this.updateNodeStyle(node, index);
+    });
+  }
+
+  /**
+   * 如果有标记节点但未收藏，自动创建收藏
+   */
+  private async autoFavoriteIfNeeded(): Promise<void> {
+    if (!this.conversationId || this.items.length === 0) return;
+    
+    const isExplicitlyFavorited = await FavoriteStore.isFavorited(this.conversationId);
+    if (isExplicitlyFavorited) return;
+    
+    if (this.pinnedNodes.size > 0) {
+      const pinnedItems: Array<{ index: number; promptText: string }> = [];
+      this.pinnedNodes.forEach(nodeId => {
+        const index = parseInt(nodeId);
+        if (this.items[index]) {
+          pinnedItems.push({
+            index,
+            promptText: this.items[index].promptText
+          });
+        }
+      });
+      
+      if (pinnedItems.length > 0) {
+        const chatTitle = this.items.length > 0 ? this.items[0].promptText : this.t('favorites.unnamed');
+        await FavoriteStore.favoriteConversation(
+          this.conversationId,
+          this.currentUrl,
+          this.siteName || 'Unknown',
+          chatTitle,
+          pinnedItems
+        );
+        this.isFavorited = true;
+        this.updateTopStarStyle();
+      }
+    }
+  }
+
+  /**
+   * 设置站点名称
+   */
+  setSiteName(name: string): void {
+    this.siteName = name;
+  }
+
+  /**
+   * 设置当前语言
+   */
+  setLanguage(lang: Language): void {
+    this.currentLanguage = lang;
+  }
+
+  /**
+   * 获取翻译文本
+   */
+  private t(key: string): string {
+    return getTranslation(key, this.currentLanguage);
+  }
+
+  /**
+   * 创建顶部单星按钮（收藏当前对话）
+   */
+  private createTopStarButton(): void {
+    const button = document.createElement('div');
+    button.className = 'timeline-top-star';
+    
+    Object.assign(button.style, {
+      position: 'absolute',
+      top: '-30px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: '24px',
+      height: '24px',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '18px',
+      opacity: '0.5',
+      transition: 'all 0.2s ease',
+      zIndex: '10'
+    });
+    
+    button.innerHTML = '☆'; // 空心星星
+    button.title = this.t('favorites.add');
+    
+    button.addEventListener('mouseenter', () => {
+      button.style.opacity = '1';
+      button.style.transform = 'translateX(-50%) scale(1.2)';
+    });
+    
+    button.addEventListener('mouseleave', () => {
+      button.style.opacity = this.isFavorited ? '1' : '0.5';
+      button.style.transform = 'translateX(-50%) scale(1)';
+    });
+    
+    button.addEventListener('click', () => this.handleFavoriteClick());
+    
+    this.container.appendChild(button);
+    this.topStarButton = button;
+  }
+
+  /**
+   * 创建底部三星按钮（打开收藏列表）
+   */
+  private createBottomStarsButton(): void {
+    const button = document.createElement('div');
+    button.className = 'timeline-bottom-stars';
+    
+    Object.assign(button.style, {
+      position: 'absolute',
+      bottom: '-35px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: '36px',
+      height: '28px',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '16px',
+      opacity: '0.5',
+      transition: 'all 0.2s ease',
+      zIndex: '10'
+    });
+    
+    // 三星重叠效果
+    button.innerHTML = `
+      <span style="position: relative;">
+        <span style="position: absolute; left: -6px; top: 0; opacity: 0.6;">★</span>
+        <span style="position: relative; z-index: 1;">★</span>
+        <span style="position: absolute; left: 6px; top: 0; opacity: 0.6;">★</span>
+      </span>
+    `;
+    button.title = this.t('favorites.viewAll');
+    
+    button.addEventListener('mouseenter', () => {
+      button.style.opacity = '1';
+      button.style.transform = 'translateX(-50%) scale(1.2)';
+    });
+    
+    button.addEventListener('mouseleave', () => {
+      button.style.opacity = '0.5';
+      button.style.transform = 'translateX(-50%) scale(1)';
+    });
+    
+    button.addEventListener('click', () => this.showFavoritesModal());
+    
+    this.container.appendChild(button);
+    this.bottomStarsButton = button;
+  }
+
+  /**
+   * 处理收藏按钮点击
+   */
+  private async handleFavoriteClick(): Promise<void> {
+    if (!this.conversationId) return;
+    
+    this.currentUrl = window.location.href;
+    
+    if (this.isFavorited) {
+      // 取消收藏
+      await FavoriteStore.unfavoriteConversation(this.conversationId);
+      this.isFavorited = false;
+    } else {
+      // 收藏当前对话
+      // 收集所有被标记的节点
+      const pinnedItems: Array<{ index: number; promptText: string }> = [];
+      
+      this.pinnedNodes.forEach(nodeId => {
+        const index = parseInt(nodeId);
+        if (this.items[index]) {
+          pinnedItems.push({
+            index,
+            promptText: this.items[index].promptText
+          });
+        }
+      });
+      
+      // 如果没有标记的节点，收藏整个对话（使用第一个节点作为代表）
+      if (pinnedItems.length === 0 && this.items.length > 0) {
+        pinnedItems.push({
+          index: 0,
+          promptText: this.items[0].promptText
+        });
+      }
+      
+      // 获取整个对话的标题（使用第一个问题的文本）
+      const chatTitle = this.items.length > 0 ? this.items[0].promptText : this.t('favorites.unnamed');
+      
+      await FavoriteStore.favoriteConversation(
+        this.conversationId,
+        this.currentUrl,
+        this.siteName || 'Unknown',
+        chatTitle,
+        pinnedItems
+      );
+      this.isFavorited = true;
+    }
+    
+    this.updateTopStarStyle();
+    
+    // 添加跳跃动画反馈
+    this.playStarBounceAnimation();
+  }
+
+  /**
+   * 播放星星跳跃动画
+   */
+  private playStarBounceAnimation(): void {
+    if (!this.topStarButton) return;
+    
+    // 添加跳跃动画
+    this.topStarButton.style.transition = 'transform 0.1s ease-out';
+    this.topStarButton.style.transform = 'translateX(-50%) scale(1.4) translateY(-8px)';
+    
+    setTimeout(() => {
+      if (this.topStarButton) {
+        this.topStarButton.style.transform = 'translateX(-50%) scale(0.9) translateY(2px)';
+      }
+    }, 100);
+    
+    setTimeout(() => {
+      if (this.topStarButton) {
+        this.topStarButton.style.transform = 'translateX(-50%) scale(1.1) translateY(-3px)';
+      }
+    }, 200);
+    
+    setTimeout(() => {
+      if (this.topStarButton) {
+        this.topStarButton.style.transform = 'translateX(-50%) scale(1)';
+        this.topStarButton.style.transition = 'all 0.2s ease';
+      }
+    }, 300);
+  }
+
+  /**
+   * 同步标记节点到收藏（当标记状态变化时调用）
+   * 如果有标记节点但尚未收藏，会自动创建收藏
+   */
+  async syncPinnedToFavorites(): Promise<void> {
+    if (!this.conversationId) return;
+    
+    // 收集当前所有被标记的节点
+    const pinnedItems: Array<{ index: number; promptText: string }> = [];
+    
+    this.pinnedNodes.forEach(nodeId => {
+      const index = parseInt(nodeId);
+      if (this.items[index]) {
+        pinnedItems.push({
+          index,
+          promptText: this.items[index].promptText
+        });
+      }
+    });
+    
+    // 如果有标记的节点但尚未收藏，自动创建收藏
+    if (pinnedItems.length > 0 && !this.isFavorited) {
+      this.currentUrl = window.location.href;
+      const chatTitle = this.items.length > 0 ? this.items[0].promptText : this.t('favorites.unnamed');
+      
+      await FavoriteStore.favoriteConversation(
+        this.conversationId,
+        this.currentUrl,
+        this.siteName || 'Unknown',
+        chatTitle,
+        pinnedItems
+      );
+      this.isFavorited = true;
+      this.updateTopStarStyle();
+      this.playStarBounceAnimation();
+      return;
+    }
+    
+    // 如果已收藏，更新收藏的子项
+    if (this.isFavorited) {
+      // 如果没有标记的节点了，保留第一个节点作为代表
+      if (pinnedItems.length === 0 && this.items.length > 0) {
+        pinnedItems.push({
+          index: 0,
+          promptText: this.items[0].promptText
+        });
+      }
+      await FavoriteStore.updateFavoriteItems(this.conversationId, pinnedItems);
+    }
+  }
+
+  /**
+   * 更新顶部星星样式
+   */
+  private updateTopStarStyle(): void {
+    if (!this.topStarButton) return;
+    
+    if (this.isFavorited) {
+      this.topStarButton.innerHTML = '★'; // 实心星星
+      this.topStarButton.style.color = this.currentTheme.pinnedColor;
+      this.topStarButton.style.opacity = '1';
+      this.topStarButton.title = this.t('favorites.remove');
+    } else {
+      this.topStarButton.innerHTML = '☆'; // 空心星星
+      this.topStarButton.style.color = this.currentTheme.defaultNodeColor;
+      this.topStarButton.style.opacity = '0.5';
+      this.topStarButton.title = this.t('favorites.add');
+    }
+  }
+
+  /**
+   * 显示收藏列表弹窗
+   */
+  private async showFavoritesModal(): Promise<void> {
+    // 如果弹窗已存在，先移除
+    if (this.favoritesModal) {
+      this.favoritesModal.remove();
+      this.favoritesModal = null;
+    }
+    
+    const favorites = await FavoriteStore.loadAll();
+    
+    // 创建弹窗
+    const modal = document.createElement('div');
+    modal.className = 'llm-favorites-modal';
+    
+    Object.assign(modal.style, {
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: '800px',
+      maxWidth: '90vw',
+      maxHeight: '70vh',
+      minHeight: '400px',
+      backgroundColor: this.currentTheme.tooltipBackgroundColor,
+      color: this.currentTheme.tooltipTextColor,
+      borderRadius: '12px',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+      zIndex: '2147483647',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
+    });
+    
+    // 标题栏
+    const header = document.createElement('div');
+    Object.assign(header.style, {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '16px 20px',
+      borderBottom: '1px solid rgba(128,128,128,0.2)'
+    });
+    
+    const title = document.createElement('h3');
+    title.textContent = this.t('favorites.list');
+    Object.assign(title.style, {
+      margin: '0',
+      fontSize: '16px',
+      fontWeight: '600'
+    });
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '✕';
+    Object.assign(closeBtn.style, {
+      background: 'none',
+      border: 'none',
+      fontSize: '18px',
+      cursor: 'pointer',
+      color: this.currentTheme.tooltipTextColor,
+      opacity: '0.6',
+      padding: '4px 8px'
+    });
+    closeBtn.addEventListener('mouseenter', () => closeBtn.style.opacity = '1');
+    closeBtn.addEventListener('mouseleave', () => closeBtn.style.opacity = '0.6');
+    closeBtn.addEventListener('click', () => this.closeFavoritesModal());
+    
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    modal.appendChild(header);
+    
+    // 内容区域
+    const content = document.createElement('div');
+    Object.assign(content.style, {
+      flex: '1',
+      overflowY: 'auto',
+      padding: '12px 20px'
+    });
+    
+    if (favorites.length === 0) {
+      const emptyMsg = document.createElement('p');
+      emptyMsg.textContent = this.t('favorites.empty');
+      Object.assign(emptyMsg.style, {
+        textAlign: 'center',
+        color: 'rgba(128,128,128,0.8)',
+        padding: '40px 0'
+      });
+      content.appendChild(emptyMsg);
+    } else {
+      favorites.forEach(conv => {
+        const convItem = this.createConversationItem(conv);
+        content.appendChild(convItem);
+      });
+    }
+    
+    modal.appendChild(content);
+    
+    // 添加遮罩层
+    const overlay = document.createElement('div');
+    overlay.className = 'llm-favorites-overlay';
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      right: '0',
+      bottom: '0',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      zIndex: '2147483646'
+    });
+    overlay.addEventListener('click', () => this.closeFavoritesModal());
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(modal);
+    this.favoritesModal = modal;
+  }
+
+  /**
+   * 创建对话收藏项
+   */
+  private createConversationItem(conv: FavoriteConversation): HTMLElement {
+    const theme = this.currentTheme;
+    const item = document.createElement('div');
+    item.className = 'favorite-conversation';
+    
+    // 根据主题计算背景色
+    const itemBgColor = theme.name === '暗色' 
+      ? 'rgba(255,255,255,0.08)' 
+      : 'rgba(0,0,0,0.04)';
+    const itemHoverBgColor = theme.name === '暗色' 
+      ? 'rgba(255,255,255,0.12)' 
+      : 'rgba(0,0,0,0.08)';
+    
+    Object.assign(item.style, {
+      marginBottom: '12px',
+      borderRadius: '8px',
+      backgroundColor: itemBgColor,
+      overflow: 'hidden',
+      border: `1px solid ${theme.timelineBarColor}`
+    });
+    
+    // 对话标题行（可展开）
+    const titleRow = document.createElement('div');
+    Object.assign(titleRow.style, {
+      display: 'flex',
+      alignItems: 'center',
+      padding: '12px 14px',
+      cursor: 'pointer',
+      gap: '10px',
+      transition: 'background-color 0.2s'
+    });
+    
+    titleRow.addEventListener('mouseenter', () => {
+      titleRow.style.backgroundColor = itemHoverBgColor;
+    });
+    titleRow.addEventListener('mouseleave', () => {
+      titleRow.style.backgroundColor = 'transparent';
+    });
+    
+    const expandIcon = document.createElement('span');
+    expandIcon.textContent = '▶';
+    Object.assign(expandIcon.style, {
+      fontSize: '10px',
+      transition: 'transform 0.2s',
+      opacity: '0.6',
+      color: theme.tooltipTextColor
+    });
+    
+    const titleText = document.createElement('span');
+    titleText.textContent = conv.title;
+    titleText.title = this.t('favorites.clickToOpen');
+    Object.assign(titleText.style, {
+      flex: '1',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      fontSize: '14px',
+      fontWeight: '500',
+      color: theme.tooltipTextColor,
+      cursor: 'pointer'
+    });
+    
+    // 点击标题跳转到对话
+    titleText.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.navigateToFavorite(conv, conv.items[0]?.nodeIndex || 0);
+    });
+    
+    // 编辑按钮（简笔画铅笔图标）
+    const editBtn = document.createElement('button');
+    editBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+    editBtn.title = this.t('favorites.editTitle');
+    Object.assign(editBtn.style, {
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      padding: '4px',
+      opacity: '0.4',
+      transition: 'opacity 0.2s',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: theme.tooltipTextColor
+    });
+    editBtn.addEventListener('mouseenter', () => {
+      editBtn.style.opacity = '1';
+    });
+    editBtn.addEventListener('mouseleave', () => {
+      editBtn.style.opacity = '0.4';
+    });
+    
+    // 编辑标题的函数
+    const startEditTitle = (e: Event) => {
+      e.stopPropagation();
+      
+      // 创建输入框替换标题
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = conv.title;
+      Object.assign(input.style, {
+        flex: '1',
+        fontSize: '14px',
+        fontWeight: '500',
+        color: theme.tooltipTextColor,
+        backgroundColor: 'transparent',
+        border: `1px solid ${theme.activeColor}`,
+        borderRadius: '4px',
+        padding: '2px 6px',
+        outline: 'none',
+        minWidth: '100px'
+      });
+      
+      // 保存编辑
+      const saveEdit = async () => {
+        const newTitle = input.value.trim();
+        if (newTitle && newTitle !== conv.title) {
+          await FavoriteStore.updateTitle(conv.conversationId, newTitle);
+          conv.title = newTitle;
+          titleText.textContent = newTitle;
+        }
+        // 恢复显示
+        input.replaceWith(titleText);
+      };
+      
+      // 取消编辑
+      const cancelEdit = () => {
+        input.replaceWith(titleText);
+      };
+      
+      input.addEventListener('blur', saveEdit);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          saveEdit();
+        } else if (e.key === 'Escape') {
+          cancelEdit();
+        }
+      });
+      
+      titleText.replaceWith(input);
+      input.focus();
+      input.select();
+    };
+    
+    // 点击编辑按钮编辑
+    editBtn.addEventListener('click', startEditTitle);
+    
+    // 删除父项按钮（简笔画垃圾桶图标）
+    const deleteBtn = document.createElement('button');
+    deleteBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+    deleteBtn.title = this.t('favorites.delete');
+    Object.assign(deleteBtn.style, {
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      padding: '4px',
+      opacity: '0.4',
+      transition: 'opacity 0.2s',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: theme.tooltipTextColor
+    });
+    deleteBtn.addEventListener('mouseenter', () => {
+      deleteBtn.style.opacity = '1';
+    });
+    deleteBtn.addEventListener('mouseleave', () => {
+      deleteBtn.style.opacity = '0.4';
+    });
+    deleteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const confirmed = await this.showConfirmDialog(this.t('favorites.confirmDelete'));
+      if (confirmed) {
+        await FavoriteStore.unfavoriteConversation(conv.conversationId);
+        item.remove();
+        // 如果删除的是当前对话，更新星星状态
+        if (this.conversationId === conv.conversationId) {
+          this.isFavorited = false;
+          this.updateTopStarStyle();
+        }
+      }
+    });
+    
+    const siteTag = document.createElement('span');
+    siteTag.textContent = conv.siteName;
+    Object.assign(siteTag.style, {
+      fontSize: '11px',
+      padding: '3px 8px',
+      backgroundColor: theme.activeColor,
+      color: '#fff',
+      borderRadius: '4px',
+      fontWeight: '500'
+    });
+    
+    titleRow.appendChild(expandIcon);
+    titleRow.appendChild(titleText);
+    titleRow.appendChild(editBtn);
+    titleRow.appendChild(deleteBtn);
+    titleRow.appendChild(siteTag);
+    
+    // 子项容器（默认隐藏）
+    const subItems = document.createElement('div');
+    Object.assign(subItems.style, {
+      display: 'none',
+      padding: '0 14px 14px 32px'
+    });
+    
+    conv.items.forEach(subItem => {
+      const subItemEl = document.createElement('div');
+      const subItemBgColor = theme.name === '暗色' 
+        ? 'rgba(255,255,255,0.05)' 
+        : 'rgba(0,0,0,0.03)';
+      const subItemHoverBgColor = theme.name === '暗色' 
+        ? 'rgba(255,255,255,0.1)' 
+        : 'rgba(0,0,0,0.06)';
+      
+      Object.assign(subItemEl.style, {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '10px 14px',
+        marginTop: '6px',
+        backgroundColor: subItemBgColor,
+        borderRadius: '6px',
+        cursor: 'pointer',
+        fontSize: '13px',
+        transition: 'all 0.2s',
+        color: theme.tooltipTextColor,
+        borderLeft: `3px solid ${theme.pinnedColor}`
+      });
+      
+      // 文本内容
+      const textSpan = document.createElement('span');
+      Object.assign(textSpan.style, {
+        flex: '1',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        cursor: 'pointer'
+      });
+      // 截取文本，确保一行显示
+      const displayText = subItem.promptText.length > 50 
+        ? subItem.promptText.substring(0, 50) + '...'
+        : subItem.promptText;
+      textSpan.textContent = displayText;
+      
+      // 删除子项按钮（简笔画 X 图标）
+      const subDeleteBtn = document.createElement('button');
+      subDeleteBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+      subDeleteBtn.title = this.t('favorites.deleteSubItem');
+      Object.assign(subDeleteBtn.style, {
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '2px 4px',
+        opacity: '0.4',
+        transition: 'opacity 0.2s',
+        color: theme.tooltipTextColor,
+        flexShrink: '0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      });
+      subDeleteBtn.addEventListener('mouseenter', () => {
+        subDeleteBtn.style.opacity = '1';
+      });
+      subDeleteBtn.addEventListener('mouseleave', () => {
+        subDeleteBtn.style.opacity = '0.4';
+      });
+      subDeleteBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const confirmed = await this.showConfirmDialog(this.t('favorites.confirmDelete'));
+        if (confirmed) {
+          await FavoriteStore.removeItem(conv.conversationId, subItem.nodeIndex);
+          subItemEl.remove();
+          // 删除所有子项后父项依然保留，用户可以点击父项跳转到对话
+        }
+      });
+      
+      subItemEl.appendChild(textSpan);
+      subItemEl.appendChild(subDeleteBtn);
+      
+      subItemEl.addEventListener('mouseenter', () => {
+        subItemEl.style.backgroundColor = subItemHoverBgColor;
+        subItemEl.style.transform = 'translateX(4px)';
+      });
+      subItemEl.addEventListener('mouseleave', () => {
+        subItemEl.style.backgroundColor = subItemBgColor;
+        subItemEl.style.transform = 'translateX(0)';
+      });
+      
+      // 点击文本部分跳转
+      textSpan.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.navigateToFavorite(conv, subItem.nodeIndex);
+      });
+      
+      subItems.appendChild(subItemEl);
+    });
+    
+    // 展开/折叠逻辑 - 只有点击展开图标才触发
+    let isExpanded = false;
+    expandIcon.style.cursor = 'pointer';
+    expandIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isExpanded = !isExpanded;
+      subItems.style.display = isExpanded ? 'block' : 'none';
+      expandIcon.style.transform = isExpanded ? 'rotate(90deg)' : 'rotate(0deg)';
+    });
+    
+    item.appendChild(titleRow);
+    item.appendChild(subItems);
+    
+    return item;
+  }
+
+  /**
+   * 跳转到收藏的对话
+   */
+  private navigateToFavorite(conv: FavoriteConversation, nodeIndex: number): void {
+    const currentUrl = window.location.href;
+    const targetUrl = conv.url;
+    
+    // 如果是当前页面，直接跳转到节点
+    if (currentUrl === targetUrl || this.conversationId === conv.conversationId) {
+      this.closeFavoritesModal();
+      
+      // 触发点击回调跳转到指定节点
+      if (this.onClickCallback) {
+        this.onClickCallback(nodeIndex);
+      }
+    } else {
+      // 跳转到其他页面
+      // 在 URL 中添加节点索引参数，以便页面加载后跳转
+      const url = new URL(targetUrl);
+      url.searchParams.set('llm_nav_index', String(nodeIndex));
+      window.open(url.toString(), '_blank');
+      this.closeFavoritesModal();
+    }
+  }
+
+  /**
+   * 关闭收藏弹窗
+   */
+  private closeFavoritesModal(): void {
+    if (this.favoritesModal) {
+      this.favoritesModal.remove();
+      this.favoritesModal = null;
+    }
+    
+    // 移除遮罩层
+    const overlay = document.querySelector('.llm-favorites-overlay');
+    if (overlay) {
+      overlay.remove();
+    }
+  }
+
+  /**
+   * 显示自定义确认对话框
+   */
+  private showConfirmDialog(message: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const theme = this.currentTheme;
+      
+      // 创建遮罩层
+      const overlay = document.createElement('div');
+      Object.assign(overlay.style, {
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        right: '0',
+        bottom: '0',
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        zIndex: '2147483648',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      });
+      
+      // 创建对话框
+      const dialog = document.createElement('div');
+      Object.assign(dialog.style, {
+        backgroundColor: theme.tooltipBackgroundColor,
+        color: theme.tooltipTextColor,
+        borderRadius: '10px',
+        padding: '20px 24px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        maxWidth: '320px',
+        textAlign: 'center'
+      });
+      
+      // 消息文本
+      const msgEl = document.createElement('p');
+      msgEl.textContent = message;
+      Object.assign(msgEl.style, {
+        margin: '0 0 20px 0',
+        fontSize: '14px',
+        lineHeight: '1.5'
+      });
+      
+      // 按钮容器
+      const btnContainer = document.createElement('div');
+      Object.assign(btnContainer.style, {
+        display: 'flex',
+        gap: '12px',
+        justifyContent: 'center'
+      });
+      
+      // 取消按钮
+      const cancelBtn = document.createElement('button');
+      cancelBtn.textContent = this.t('favorites.cancel');
+      Object.assign(cancelBtn.style, {
+        padding: '8px 20px',
+        border: `1px solid ${theme.timelineBarColor}`,
+        borderRadius: '6px',
+        backgroundColor: 'transparent',
+        color: theme.tooltipTextColor,
+        cursor: 'pointer',
+        fontSize: '13px',
+        transition: 'all 0.2s'
+      });
+      cancelBtn.addEventListener('mouseenter', () => {
+        cancelBtn.style.backgroundColor = theme.name === '暗色' 
+          ? 'rgba(255,255,255,0.1)' 
+          : 'rgba(0,0,0,0.05)';
+      });
+      cancelBtn.addEventListener('mouseleave', () => {
+        cancelBtn.style.backgroundColor = 'transparent';
+      });
+      
+      // 确认按钮
+      const confirmBtn = document.createElement('button');
+      confirmBtn.textContent = this.t('favorites.confirm');
+      Object.assign(confirmBtn.style, {
+        padding: '8px 20px',
+        border: 'none',
+        borderRadius: '6px',
+        backgroundColor: '#e53935',
+        color: '#fff',
+        cursor: 'pointer',
+        fontSize: '13px',
+        transition: 'all 0.2s'
+      });
+      confirmBtn.addEventListener('mouseenter', () => {
+        confirmBtn.style.backgroundColor = '#c62828';
+      });
+      confirmBtn.addEventListener('mouseleave', () => {
+        confirmBtn.style.backgroundColor = '#e53935';
+      });
+      
+      // 关闭对话框
+      const closeDialog = (result: boolean) => {
+        overlay.remove();
+        resolve(result);
+      };
+      
+      cancelBtn.addEventListener('click', () => closeDialog(false));
+      confirmBtn.addEventListener('click', () => closeDialog(true));
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeDialog(false);
+      });
+      
+      btnContainer.appendChild(cancelBtn);
+      btnContainer.appendChild(confirmBtn);
+      dialog.appendChild(msgEl);
+      dialog.appendChild(btnContainer);
+      overlay.appendChild(dialog);
+      document.body.appendChild(overlay);
+      
+      // 聚焦确认按钮
+      confirmBtn.focus();
     });
   }
 
@@ -412,6 +1346,9 @@ export class RightSideTimelinejump {
           
           this.updateNodeStyle(node, index);
           
+          // 同步到收藏
+          this.syncPinnedToFavorites();
+          
           // 震动反馈 (如果支持)
           if (navigator.vibrate) {
             try { navigator.vibrate(50); } catch (e) {}
@@ -703,6 +1640,9 @@ export class RightSideTimelinejump {
     // 更新样式
     this.updateNodeStyle(this.nodes[index], index);
     
+    // 同步到收藏
+    this.syncPinnedToFavorites();
+    
     // 震动反馈
     if (navigator.vibrate) {
       try { navigator.vibrate(50); } catch (e) {}
@@ -723,6 +1663,7 @@ export class RightSideTimelinejump {
     this.slider?.remove();
     this.container.remove();
     this.tooltip.remove();
+    this.closeFavoritesModal();
   }
 
   private handleWrapperScroll = (): void => {

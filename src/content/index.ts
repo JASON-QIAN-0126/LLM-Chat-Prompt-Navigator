@@ -3,6 +3,7 @@ import { getActiveAdapter } from './siteAdapters/index';
 import { AnswerIndexManager } from './navigation/answerIndexManager';
 import { RightSideTimelinejump } from './navigation/rightSideTimelineNavigator';
 import { scrollToAndHighlight } from './navigation/scrollAndHighlight';
+import type { Language } from '../utils/i18n';
 
 let indexManager: AnswerIndexManager | null = null;
 let timelinejump: RightSideTimelinejump | null = null;
@@ -24,7 +25,9 @@ async function getSettings() {
     'enable_claude', 
     'enable_gemini',
     'enable_deepseek',
-    'ui_theme'
+    'enable_grok',
+    'ui_theme',
+    'language'
   ]);
   return cachedSettings;
 }
@@ -215,6 +218,57 @@ function clearUI(): void {
 }
 
 /**
+ * 检查 URL 参数并跳转到收藏的节点位置
+ * 使用轮询检测目标节点是否已加载，确保页面内容就绪后再跳转
+ */
+function checkAndNavigateToFavoriteIndex(): void {
+  const url = new URL(window.location.href);
+  const navIndex = url.searchParams.get('llm_nav_index');
+  
+  if (navIndex === null) return;
+  
+  const targetIndex = parseInt(navIndex, 10);
+  if (isNaN(targetIndex) || targetIndex < 0) return;
+  
+  // 清理 URL 参数，避免刷新时重复跳转
+  url.searchParams.delete('llm_nav_index');
+  window.history.replaceState({}, '', url.toString());
+  
+  // 轮询检测目标节点是否已加载
+  let attempts = 0;
+  const maxAttempts = 30; // 最多尝试 30 次（约 15 秒）
+  const checkInterval = 500; // 每 500ms 检查一次
+  
+  const checkAndNavigate = () => {
+    attempts++;
+    
+    if (!indexManager) {
+      if (attempts < maxAttempts) {
+        setTimeout(checkAndNavigate, checkInterval);
+      }
+      return;
+    }
+    
+    const totalCount = indexManager.getTotalCount();
+    
+    // 检查目标索引是否在有效范围内
+    if (targetIndex < totalCount) {
+      // 目标节点已存在，执行跳转
+      navigateToAnswer(targetIndex);
+      return;
+    }
+    
+    // 目标节点还未加载，继续等待
+    if (attempts < maxAttempts) {
+      setTimeout(checkAndNavigate, checkInterval);
+    }
+  };
+  
+  // 开始检测
+  setTimeout(checkAndNavigate, checkInterval);
+}
+
+/**
  * 从 URL 或页面中获取对话 ID
  */
 function getConversationId(): string {
@@ -266,6 +320,16 @@ function initTimelinejump(): void {
   // 1. 更新/设置对话 ID
   const conversationId = getConversationId();
   timelinejump.setConversationId(conversationId);
+
+  // 1.5 设置站点名称（用于收藏功能）
+  const adapter = getActiveAdapter(window.location, cachedSettings?.custom_urls || []);
+  if (adapter) {
+    timelinejump.setSiteName(adapter.name);
+  }
+
+  // 1.6 设置语言
+  const language = (cachedSettings?.language as Language) || 'auto';
+  timelinejump.setLanguage(language);
 
   // 2. 更新/设置主题
   const theme = (cachedSettings?.ui_theme as ThemeMode) || 'auto';
@@ -344,6 +408,8 @@ async function init() {
         isEnabled = settings.enable_gemini !== false;
     } else if (adapter.name === 'DeepSeek') {
         isEnabled = settings.enable_deepseek !== false;
+    } else if (adapter.name === 'Grok') {
+        isEnabled = settings.enable_grok !== false;
     }
 
     // console.log('[LLM-Nav] Adapter enabled:', isEnabled);
@@ -522,9 +588,15 @@ document.addEventListener('click', () => {
 
 // 页面加载完成后初始化
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', () => {
+    init();
+    // 独立检测收藏跳转参数（不依赖 init 的结果）
+    checkAndNavigateToFavoriteIndex();
+  });
 } else {
   init();
+  // 独立检测收藏跳转参数（不依赖 init 的结果）
+  checkAndNavigateToFavoriteIndex();
 }
 
 // 监听来自 background 和 options 的消息

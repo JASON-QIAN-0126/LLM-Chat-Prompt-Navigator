@@ -1,7 +1,7 @@
 <h1 align="center">AI Chat Quick jump</h1>
 
 <p align="center">
-  <strong>让 AI 对话导航变得简单高效</strong>
+  <strong>最便捷美观的AI对话导航收藏插件</strong>
 </p>
 
 <p align="center">
@@ -33,7 +33,7 @@
 - 🔍 **找不到重点**，重要的对话内容淹没在长长的聊天记录中
 - ⏱️ **浪费时间**，在冗长的对话中反复上下翻找
 
-**AI Chat Prompt jump** 就是为了解决这些问题而生！这是一款浏览器扩展，让您可以在 AI 对话页面中**快速跳转、标记重点、一键定位**任何一条提问和回答。
+**AI Chat Prompt jump** 就是为了解决这些问题而生！这是一款浏览器扩展，让您可以在 AI 对话页面中**快速定位、标记收藏重点**任何一条提问和回答。
 
 ### ✅ AI Chat Quick jump 核心功能
 
@@ -43,17 +43,17 @@
 - **点击小圆点**立即跳转到对应位置，并高亮显示
 - 自动跟踪当前浏览位置，右侧的小圆点会自动跟随当前这条提问
 
+#### 📌 **智能标记收藏功能**
+- **长按节点 0.5 秒**即可标记重要对话，标记后自动加入收藏夹。
+- 📁 **底部“🌟🌟🌟”快速打开**：查看收藏列表并跳转原始对话。
+- ✏️ **支持自定义收藏标题**：让重点内容更易管理。
+- 🔄 **跨平台同步收藏**：ChatGPT、Grok 等多个 AI 平台共享你的收藏记录。
+
 #### ⌨️ **强大的快捷键支持**
 - **Alt + W / Alt + S**：快速切换上一个/下一个回答
 - **Alt + A**：标记/取消标记当前对话（重点内容一目了然）
 - **Alt + D**：显示/隐藏右侧历史对话导航条（需要专注时可以收起）
 - 支持 Mac 和 Windows 系统，快捷键可自定义
-
-#### 📌 **智能标记功能**
-- **长按节点 0.5 秒**即可标记重要对话
-- 标记的对话圆点会以**特殊颜色**高亮显示，方便后续查找
-- 标记状态**自动保存**，切换对话后依然保留
-- 支持快捷键快速标记当前正在查看的对话
 
 #### 🎨 **主题自适应**
 - 支持**自动/浅色/深色/天蓝色/薰衣草/粉红/橘黄**多种主题模式
@@ -64,12 +64,16 @@
 - ✅ **Claude** (claude.ai)
 - ✅ **Gemini** (gemini.google.com)
 - ✅ **Deepseek** (chat.deepseek.com)
+- ✅ **Grok** (grok.com)
 - 🔧 支持自定义 URL（可在设置中添加其他 AI 聊天网站）
 
-### 🚀 如何使用
+### 🚀 快速安装
 
-#### Chrome 网上应用店（推荐）
+#### Chrome 网上插件商店（推荐）
 即将上线，敬请期待...
+
+#### Edge 网上插件商店（推荐）
+[![edge-extension](https://img.shields.io/badge/Install_on-Edge-0078D7?logo=microsoft-edge&logoColor=white)](https://microsoftedge.microsoft.com/addons/detail/ai-chat-quick-jump/hffbnbdeddbimnmgbbdhlhjbmkflpnpo)
 
 #### 手动安装（开发者模式）
 1. 克隆或下载本项目代码

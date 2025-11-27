@@ -3,9 +3,9 @@ export type Language = 'zh-CN' | 'en' | 'auto';
 export const messages = {
   'zh-CN': {
     // Options Page
-    'options.title': '设置 - Ai Chat Quick Navigator',
-    'options.header.title': 'Ai Chat Quick Navigator',
-    'options.header.subtitle': '在与AI对话页面中快速导航',
+    'options.title': '设置 - Ai Chat Quick jump',
+    'options.header.title': 'Ai Chat Quick jump',
+    'options.header.subtitle': '在与AI对话页面中快速导航，标记，收藏对话',
     'options.settings': '设置',
     'options.language': '语言 / Language',
     'options.language.desc': '选择界面语言',
@@ -37,8 +37,8 @@ export const messages = {
     'options.domain.exists': '该域名已存在',
 
     // Popup Page
-    'popup.title': 'Ai Chat Quick Navigator',
-    'popup.desc': '在对话页面中快速导航 AI 回答',
+    'popup.title': 'Ai Chat Quick jump',
+    'popup.desc': '在与AI对话页面中快速导航，标记，收藏回答',
     'popup.shortcuts': '快捷键 (Shortcuts)',
     'popup.switch': '↕️ 切换回答',
     'popup.mark': '📌 标记/取消',
@@ -46,13 +46,28 @@ export const messages = {
     'popup.hint.theme': '右键选项，可自定义主题颜色和开启其他站点支持。',
     'popup.hint.shortcuts': '快捷键访问',
     'popup.hint.modify': '修改。',
-    'popup.feedback': '任何意见想法，欢迎访问'
+    'popup.feedback': '任何意见想法，欢迎访问',
+
+    // Favorites
+    'favorites.unnamed': '未命名对话',
+    'favorites.add': '收藏当前对话',
+    'favorites.remove': '取消收藏',
+    'favorites.viewAll': '查看所有收藏',
+    'favorites.list': '收藏列表',
+    'favorites.empty': '暂无收藏',
+    'favorites.clickToOpen': '点击进入对话',
+    'favorites.editTitle': '编辑标题',
+    'favorites.delete': '删除此收藏',
+    'favorites.deleteSubItem': '删除此子项',
+    'favorites.confirmDelete': '确定要删除这个收藏吗？',
+    'favorites.cancel': '取消',
+    'favorites.confirm': '确定'
   },
   'en': {
     // Options Page
-    'options.title': 'Settings - Ai Chat Quick Navigator',
-    'options.header.title': 'Ai Chat Quick Navigator',
-    'options.header.subtitle': 'Quickly navigate in AI conversation pages',
+    'options.title': 'Settings - Ai Chat Quick jump',
+    'options.header.title': 'Ai Chat Quick jump',
+    'options.header.subtitle': 'Quickly navigate, mark, and collect conversations in AI conversation pages',
     'options.settings': 'Settings',
     'options.language': 'Language / 语言',
     'options.language.desc': 'Select interface language',
@@ -84,8 +99,8 @@ export const messages = {
     'options.domain.exists': 'Domain already exists',
 
     // Popup Page
-    'popup.title': 'Ai Chat Quick Navigator',
-    'popup.desc': 'Quickly navigate AI answers in conversation pages',
+    'popup.title': 'Ai Chat Quick jump',
+    'popup.desc': 'Quickly navigate, mark, and collect answers in AI conversation pages',
     'popup.shortcuts': 'Shortcuts',
     'popup.switch': '↕️ Switch Answer',
     'popup.mark': '📌 Toggle Pin',
@@ -93,7 +108,22 @@ export const messages = {
     'popup.hint.theme': 'Options to customize theme and sites.',
     'popup.hint.shortcuts': 'Visit',
     'popup.hint.modify': 'to modify shortcuts.',
-    'popup.feedback': 'Feedback & Suggestions: '
+    'popup.feedback': 'Feedback & Suggestions: ',
+
+    // Favorites
+    'favorites.unnamed': 'Untitled',
+    'favorites.add': 'Add to Favorites',
+    'favorites.remove': 'Remove from Favorites',
+    'favorites.viewAll': 'View All Favorites',
+    'favorites.list': 'Favorites',
+    'favorites.empty': 'No favorites yet',
+    'favorites.clickToOpen': 'Click to open',
+    'favorites.editTitle': 'Edit title',
+    'favorites.delete': 'Delete',
+    'favorites.deleteSubItem': 'Delete item',
+    'favorites.confirmDelete': 'Are you sure you want to delete this?',
+    'favorites.cancel': 'Cancel',
+    'favorites.confirm': 'Confirm'
   }
 };
 

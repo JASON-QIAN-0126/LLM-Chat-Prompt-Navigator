@@ -74,7 +74,7 @@ export class RightSideTimelinejump {
     // 创建顶部单星按钮和底部三星按钮
     this.createTopStarButton();
     this.createBottomStarsButton();
-    
+
     this.createSlider();
     this.nodesWrapper.addEventListener('scroll', this.handleWrapperScroll, { passive: true });
     
@@ -125,9 +125,7 @@ export class RightSideTimelinejump {
     
     // 更新星星按钮样式
     this.updateTopStarStyle();
-    if (this.bottomStarsButton) {
-      this.bottomStarsButton.style.color = this.currentTheme.defaultNodeColor;
-    }
+    this.updateBottomStarsStyle();
   }
 
   /**
@@ -276,28 +274,27 @@ export class RightSideTimelinejump {
       alignItems: 'center',
       justifyContent: 'center',
       fontSize: '16px',
-      opacity: '0.5',
+      opacity: '1', // 常亮状态
       transition: 'all 0.2s ease',
-      zIndex: '10'
+      zIndex: '10',
+      color: this.currentTheme.pinnedColor // 跟随主题颜色
     });
     
     // 三星重叠效果
     button.innerHTML = `
       <span style="position: relative;">
-        <span style="position: absolute; left: -6px; top: 0; opacity: 0.6;">★</span>
+        <span style="position: absolute; left: -6px; top: 0; opacity: 0.7;">★</span>
         <span style="position: relative; z-index: 1;">★</span>
-        <span style="position: absolute; left: 6px; top: 0; opacity: 0.6;">★</span>
+        <span style="position: absolute; left: 6px; top: 0; opacity: 0.7;">★</span>
       </span>
     `;
     button.title = this.t('favorites.viewAll');
     
     button.addEventListener('mouseenter', () => {
-      button.style.opacity = '1';
       button.style.transform = 'translateX(-50%) scale(1.2)';
     });
     
     button.addEventListener('mouseleave', () => {
-      button.style.opacity = '0.5';
       button.style.transform = 'translateX(-50%) scale(1)';
     });
     
@@ -305,6 +302,14 @@ export class RightSideTimelinejump {
     
     this.container.appendChild(button);
     this.bottomStarsButton = button;
+  }
+
+  /**
+   * 更新底部三星样式（主题变化时调用）
+   */
+  private updateBottomStarsStyle(): void {
+    if (!this.bottomStarsButton) return;
+    this.bottomStarsButton.style.color = this.currentTheme.pinnedColor;
   }
 
   /**
@@ -764,22 +769,39 @@ export class RightSideTimelinejump {
       }
     });
     
-    const siteTag = document.createElement('span');
-    siteTag.textContent = conv.siteName;
-    Object.assign(siteTag.style, {
-      fontSize: '11px',
-      padding: '3px 8px',
-      backgroundColor: theme.activeColor,
-      color: '#fff',
+    // 网站图标
+    const siteIcon = document.createElement('img');
+    const iconUrl = this.getSiteIconUrl(conv.siteName);
+    siteIcon.src = iconUrl;
+    siteIcon.alt = conv.siteName;
+    siteIcon.title = conv.siteName;
+    Object.assign(siteIcon.style, {
+      width: '20px',
+      height: '20px',
       borderRadius: '4px',
-      fontWeight: '500'
+      flexShrink: '0',
+      objectFit: 'contain'
     });
+    // 图标加载失败时显示文字
+    siteIcon.onerror = () => {
+      const textTag = document.createElement('span');
+      textTag.textContent = conv.siteName;
+      Object.assign(textTag.style, {
+        fontSize: '11px',
+        padding: '3px 8px',
+        backgroundColor: theme.activeColor,
+        color: '#fff',
+        borderRadius: '4px',
+        fontWeight: '500'
+      });
+      siteIcon.replaceWith(textTag);
+    };
     
     titleRow.appendChild(expandIcon);
     titleRow.appendChild(titleText);
     titleRow.appendChild(editBtn);
     titleRow.appendChild(deleteBtn);
-    titleRow.appendChild(siteTag);
+    titleRow.appendChild(siteIcon);
     
     // 子项容器（默认隐藏）
     const subItems = document.createElement('div');
@@ -1186,14 +1208,14 @@ export class RightSideTimelinejump {
     const isPinned = index && this.pinnedNodes.has(index);
 
     // 截断文本（最多 80 字符）
-    let displayText = text.length > 80 ? text.substring(0, 80) + '...' : text;
+    const displayText = text.length > 80 ? text.substring(0, 80) + '...' : text;
 
-    // 如果被标记，添加星号
+    // 如果被标记，添加带主题颜色的星星
     if (isPinned) {
-      displayText = '🌟 ' + displayText;
+      this.tooltip.innerHTML = `<span style="color: ${this.currentTheme.pinnedColor}; margin-right: 4px;">★</span>${this.escapeHtml(displayText)}`;
+    } else {
+      this.tooltip.textContent = displayText;
     }
-
-    this.tooltip.textContent = displayText;
     this.tooltip.style.display = 'block';
 
     // 计算位置（显示在节点左侧）
@@ -1224,6 +1246,31 @@ export class RightSideTimelinejump {
    */
   private hideTooltip(): void {
     this.tooltip.style.display = 'none';
+  }
+
+  /**
+   * 转义 HTML 特殊字符
+   */
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  /**
+   * 获取网站对应的图标 URL
+   */
+  private getSiteIconUrl(siteName: string): string {
+    const iconMap: Record<string, string> = {
+      'ChatGPT': 'icons/chatgpt.ico',
+      'Claude': 'icons/claude-ai-icon.webp',
+      'Gemini': 'icons/google-gemini-icon.webp',
+      'DeepSeek': 'icons/deepseek.ico',
+      'Grok': 'icons/grok.svg'
+    };
+    
+    const iconPath = iconMap[siteName] || 'icons/icon48.svg';
+    return chrome.runtime.getURL(iconPath);
   }
 
   /**

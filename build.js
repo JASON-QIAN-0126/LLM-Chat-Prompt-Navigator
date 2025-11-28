@@ -54,6 +54,12 @@ if (fs.existsSync(localesSrc)) {
   copyDir(localesSrc, path.join('dist', '_locales'));
 }
 
+// 复制 icons
+const iconsSrc = path.join('icons');
+if (fs.existsSync(iconsSrc)) {
+  copyDir(iconsSrc, path.join('dist', 'icons'));
+}
+
 // 打包配置
 const buildOptions = {
   entryPoints: [

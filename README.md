@@ -1,7 +1,7 @@
 <h1 align="center">AI Chat Quick jump</h1>
 
 <p align="center">
-  <strong>最便捷美观的AI对话导航收藏插件</strong>
+  <strong>便捷，美观的AI对话导航收藏插件</strong>
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
 
 ---
 
-### 👍 官方Website 快速了解一切
+### 👍 官方Website 快速了解安装
 
 - [www.aichatjump.click](http://www.aichatjump.click)
 
